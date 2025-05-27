@@ -1,0 +1,5 @@
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+openai>=1.66.3
+ollama>=0.4.7
+pyautogen>=0.8.2
