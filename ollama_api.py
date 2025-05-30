@@ -4,13 +4,13 @@ import ollama
 from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
 
 class OllamaAPI:
-    def __init__(self, openai_base_url="http://localhost:11434/v1", api_key="ollama"):
+    def __init__(self, openai_base_url: str = "http://localhost:11434/v1", api_key: str = "ollama"):
         self.client = OpenAI(
             base_url=openai_base_url,
             api_key=api_key
         )
 
-    def ollama_chat(self, model="llama3.2"):
+    def ollama_chat(self, model: str = "llama3.2"):
         response = ollama.chat(
             model=model,
             messages=[
@@ -20,7 +20,7 @@ class OllamaAPI:
         )
         print(response["message"]["content"])
 
-    def multimodal_1(self, model="llava:7b"):
+    def multimodal_1(self, model: str = "llava:7b"):
         res = ollama.chat(
             model=model,
             messages=[
@@ -33,7 +33,7 @@ class OllamaAPI:
         )
         print(res["message"]["content"])
 
-    def multimodal_2(self, model="llava:7b"):
+    def multimodal_2(self, model: str = "llava:7b"):
         with open('tesla-model-y-top.jpg', 'rb') as f:
             res = ollama.chat(
                 model=model,
@@ -47,14 +47,14 @@ class OllamaAPI:
             )
         print(res["message"]["content"])
 
-    def text_completion(self, model="codellama:latest"):
+    def text_completion(self, model: str = "codellama:latest"):
         result = ollama.generate(
             model=model,
             prompt="// A c function to reverse a string",
         )
         print(result["response"])
 
-    def openai_chat(self, model="llama3.2:latest"):
+    def openai_chat(self, model: str = "llama3.2:latest"):
         messages = [
             {
                 "role": "user",
@@ -71,7 +71,7 @@ class OllamaAPI:
         except Exception as e:
             print(e)
 
-    def image(self, model="llava:7b"):
+    def image(self, model: str = "llava:7b"):
         try:
             response = self.client.chat.completions.create(
                 model=model,
@@ -90,7 +90,7 @@ class OllamaAPI:
         except Exception as e:
             print(e)
 
-    def get_chat_completion_openai(self, model="llama3.2:latest"):
+    def get_chat_completion_openai(self, model: str = "llama3.2:latest"):
         try:
             chat_completion = self.client.chat.completions.create(
                 model=model,
@@ -119,7 +119,7 @@ class OllamaAPI:
             print(e)
 
 
-def autogen(model="codellama:latest"):
+def autogen(model: str = "codellama:latest"):
     config_list = [
         {
             "model": model,
@@ -137,7 +137,7 @@ def autogen(model="codellama:latest"):
     
     user_proxy.initiate_chat(assistant, message="Plot a chart of NVDA and TESLA stock price change YTD.")
 
-def conversable_agent(model="codellama:latest"):
+def conversable_agent(model: str = "codellama:latest"):
     config_list = [
         {
             "model": model,
