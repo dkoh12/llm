@@ -1,7 +1,7 @@
 Playing around with both LM Studio and Ollama.
 For sake of simplicity, not touching llama.cpp
 
-Vibecoded with Github Copilot - GPT4.1
+Vibecoded with Github Copilot - GPT-4.1 and Gemini 2.5 Pro
 
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python" alt="Python 3.10+">

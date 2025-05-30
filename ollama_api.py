@@ -17,7 +17,7 @@ class OllamaAPI:
             base_url=openai_base_url,
             api_key=api_key
         )
-        self.session_history =  [{"role": "system", "content": "You are a helpful assistant."}]
+        self.session_history = session_history if session_history is not None else [{"role": "system", "content": "You are a helpful assistant."}]
 
     def ollama_chat(self, prompt: str, model: str = "llama3.2"):
         """
@@ -31,15 +31,18 @@ class OllamaAPI:
         # Append the user's prompt to the session history
         self.session_history.append({"role": "user", "content": prompt})
 
-        response = ollama.chat(
-            model=model,
-            messages=self.session_history,
-        )
-        ai_message = response["message"]["content"]
-        print(ai_message)
+        try:
+            response = ollama.chat(
+                model=model,
+                messages=self.session_history,
+            )
+            ai_message = response["message"]["content"]
+            print(ai_message)
 
-        # Append the AI's response to the session history
-        self.session_history.append({"role": "assistant", "content": ai_message})
+            # Append the AI's response to the session history
+            self.session_history.append({"role": "assistant", "content": ai_message})
+        except Exception as e:
+            print(f"Error in ollama_chat: {e}")
 
     def multimodal_1(self, model: str = "llava:7b"):
         """
@@ -218,12 +221,14 @@ def conversable_agent(model: str = "codellama:latest"):
 if __name__=="__main__":
     api = OllamaAPI()
     
-    # api.ollama_chat()
+    # api.ollama_chat(prompt="Hello, who won the world series in 2020?")
+    # print(f"Ollama Session History: {api.session_history}")
     # api.multimodal_1()
     # api.multimodal_2()
-    # api.text_completion()
-    # api.openai_chat()
-    api.image()
-    api.get_chat_completion_openai()
+    # api.text_completion(prompt="// A python function to add two numbers")
+    # api.openai_chat(prompt="What is the capital of Canada?")
+    # api.get_chat_completion_openai(prompt="And what is its population?")
+    # print(f"Ollama Session History after OpenAI call: {api.session_history}")
+    # api.image()
     # autogen()
     # conversable_agent()

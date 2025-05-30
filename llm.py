@@ -23,9 +23,12 @@ class LLMUnifiedAgent:
             **kwargs: Arguments to pass to the underlying API class.
         """
         if provider == "ollama":
+            # Pass kwargs to OllamaAPI constructor if it accepts them
+            # For now, assuming default OllamaAPI initialization or specific args if needed
             self.api = OllamaAPI(**kwargs)
             self.provider = "ollama"
         elif provider == "lmstudio":
+            # Pass kwargs to LMStudioAPI constructor
             self.api = LMStudioAPI(**kwargs)
             self.provider = "lmstudio"
         else:
@@ -34,12 +37,13 @@ class LLMUnifiedAgent:
     def _progress_bar(self, stop_event: threading.Event):
         spinner = ['|', '/', '-', '\\']
         idx = 0
-        print_system("Waiting for response ")
+        # Using print directly here as print_system might interfere with \b
+        print("Waiting for response ", end='', flush=True)
         while not stop_event.is_set():
-            print(f"\033[96m{spinner[idx % len(spinner)]}\033[0m", end='\b', flush=True)
+            print(spinner[idx % len(spinner)], end='\b', flush=True)
             idx += 1
             time.sleep(0.1)
-        print(" ", end='\r', flush=True)
+        print(" ", end='\r', flush=True) # Clear the spinner
 
     def chat(self, prompt: str, model: str = None):
         """
@@ -54,22 +58,19 @@ class LLMUnifiedAgent:
         progress_thread.start()
         try:
             if self.provider == "ollama":
-                # Use ollama_chat if available
                 if model:
-                    self.api.ollama_chat(model=model)
+                    self.api.ollama_chat(prompt=prompt, model=model)
                 else:
-                    self.api.ollama_chat()
+                    self.api.ollama_chat(prompt=prompt)
             elif self.provider == "lmstudio":
-                # LMStudio expects a list of messages
-                messages = [
-                    {"role": "user", "content": prompt}
-                ]
                 if model:
-                    self.api.call_chat_completions(messages, model=model)
+                    self.api.call_chat_completions(prompt=prompt, model=model)
                 else:
-                    self.api.call_chat_completions(messages)
+                    self.api.call_chat_completions(prompt=prompt)
             else:
                 print_system("Unknown provider.")
+        except Exception as e:
+            print_system(f"Error during chat: {e}")
         finally:
             stop_event.set()
             progress_thread.join()
@@ -88,25 +89,38 @@ class LLMUnifiedAgent:
         try:
             if self.provider == "ollama":
                 if model:
-                    self.api.text_completion(model=model)
+                    self.api.text_completion(prompt=prompt, model=model)
                 else:
-                    self.api.text_completion()
+                    self.api.text_completion(prompt=prompt)
             elif self.provider == "lmstudio":
                 if model:
-                    self.api.completions(prompt, model=model)
+                    self.api.completions(prompt=prompt, model=model)
                 else:
-                    self.api.completions(prompt)
+                    self.api.completions(prompt=prompt)
             else:
                 print_system("Unknown provider.")
+        except Exception as e:
+            print_system(f"Error during text completion: {e}")
         finally:
             stop_event.set()
             progress_thread.join()
 
 if __name__ == "__main__":
-    # Example usage
     print_system("Choose provider: [ollama/lmstudio]")
-    provider = input().strip().lower()
-    agent = LLMUnifiedAgent(provider=provider)
+    provider_choice = input().strip().lower()
+    
+    agent_kwargs = {}
+    if provider_choice == "lmstudio":
+        print_system("Use OpenAI-compatible API for LM Studio? [yes/no] (default: no)")
+        openai_choice = input().strip().lower()
+        agent_kwargs['openai_api'] = True if openai_choice == 'yes' else False
+
+    try:
+        agent = LLMUnifiedAgent(provider=provider_choice, **agent_kwargs)
+    except ValueError as e:
+        print_system(str(e))
+        sys.exit(1)
+
 
     while True:    
         print_system("Type 'chat' for chat, 'completion' for text completion, or 'exit' to quit.")
@@ -114,10 +128,10 @@ if __name__ == "__main__":
         if cmd == "exit":
             break
         elif cmd == "chat":
-            prompt = input("Your message: ")
-            agent.chat(prompt)
+            user_prompt = input("Your message: ")
+            agent.chat(prompt=user_prompt)
         elif cmd == "completion":
-            prompt = input("Your prompt: ")
-            agent.text_completion(prompt)
+            user_prompt = input("Your prompt: ")
+            agent.text_completion(prompt=user_prompt)
         else:
             print_system("Unknown command.")
