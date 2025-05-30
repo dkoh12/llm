@@ -27,14 +27,17 @@ class OllamaAPI:
         self.session_history = session_history if session_history is not None else [{"role": "system", "content": "You are a helpful assistant."}]
         logger.info(f"OllamaAPI initialized. OpenAI compatible endpoint: {openai_base_url}")
 
-    def ollama_chat(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL):
+    def ollama_chat(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL) -> str | None:
         """
-        Run a chat completion using the Ollama API and print the response.
+        Run a chat completion using the Ollama API and log the response.
         Appends the user's prompt and AI's response to the session history.
 
         Args:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
         self.session_history.append({"role": "user", "content": prompt})
         logger.debug(f"Calling ollama.chat with model: {model}")
@@ -44,22 +47,25 @@ class OllamaAPI:
                 messages=self.session_history,
             )
             ai_message = response["message"]["content"]
-            print(ai_message)
+            logger.info(f"Ollama Chat Response: {ai_message}") # Changed from print to logger.info
 
             # Append the AI's response to the session history
             self.session_history.append({"role": "assistant", "content": ai_message})
             return ai_message
         except Exception as e:
-            logger.exception(f"Error in ollama_chat") # Using logger.exception
+            logger.exception(f"Error in ollama_chat") 
             return None
 
-    def multimodal_1(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
+    def multimodal_1(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg') -> str | None:
         """
         Run a multimodal chat completion with an image file path and log the response.
 
         Args:
             model (str): The model ID to use for multimodal chat.
             image_file_path (str): Path to the image file.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
         logger.debug(f"Calling ollama.chat (multimodal_1) with model: {model}, image: {image_file_path}")
         try:
@@ -69,7 +75,7 @@ class OllamaAPI:
                     {
                         "role": "user",
                         "content": "Describe the image",
-                        "images": [image_file_path] # Use the parameter
+                        "images": [image_file_path] 
                     }
                 ],
             )
@@ -83,13 +89,16 @@ class OllamaAPI:
             logger.exception(f"Error in multimodal_1")
             return None
 
-    def multimodal_2(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
+    def multimodal_2(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg') -> str | None:
         """
         Run a multimodal chat completion by reading an image as bytes and log the response.
 
         Args:
             model (str): The model ID to use for multimodal chat.
             image_file_path (str): Path to the image file.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
         logger.debug(f"Calling ollama.chat (multimodal_2) with model: {model}, image: {image_file_path}")
         try:
@@ -115,13 +124,16 @@ class OllamaAPI:
             logger.exception(f"Error in multimodal_2")
             return None
 
-    def text_completion(self, prompt: str, model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
+    def text_completion(self, prompt: str, model: str = config.DEFAULT_TEXT_COMPLETION_MODEL) -> str | None:
         """
         Generate a text completion using the Ollama API and log the response.
 
         Args:
             prompt (str): The prompt string to complete.
             model (str): The model ID to use for text completion.
+
+        Returns:
+            str | None: The AI's completed text string or None if an error occurs.
         """
         logger.debug(f"Calling ollama.generate with model: {model}")
         try:
@@ -136,7 +148,7 @@ class OllamaAPI:
             logger.exception(f"Error in text_completion")
             return None
 
-    def openai_chat(self, prompt: str, model: str = "llama3.2:latest"):
+    def openai_chat(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL) -> str | None:
         """
         Run a chat completion using the OpenAI-compatible API and log the response.
         This is a single-turn chat, does not use self.session_history.
@@ -144,6 +156,9 @@ class OllamaAPI:
         Args:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
         logger.debug(f"Calling OpenAI compatible chat with model: {model}")
         messages = [
@@ -163,16 +178,31 @@ class OllamaAPI:
             logger.exception(f"Error in openai_chat")
             return None
 
-    def image(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
+    def image(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg') -> str | None:
         """
         Run a multimodal chat completion using the OpenAI-compatible API with an image and log the response.
+        Note: For OpenAI-compatible APIs, image_file_path might need to be a public URL or a base64 encoded data URI.
 
         Args:
             model (str): The model ID to use for multimodal chat.
-            image_file_path (str): Path to the image file.
+            image_file_path (str): Path or URL to the image file.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
-        logger.debug(f"Calling OpenAI compatible image chat with model: {model}, image: {image_file_path}")
+        logger.debug(f"Calling OpenAI compatible image chat with model: {model}, image path/URL: {image_file_path}")
+        # For robust local file handling, consider base64 encoding as shown in previous suggestions.
+        # This implementation uses the image_file_path directly as per the current code structure.
         try:
+            # If image_file_path is a local path and needs to be base64 encoded:
+            # with open(image_file_path, "rb") as image_file:
+            #     base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            # mime_type = "image/jpeg" if image_file_path.lower().endswith((".jpg", ".jpeg")) else "image/png"
+            # image_url_for_api = f"data:{mime_type};base64,{base64_image}"
+            # Else, if image_file_path is already a URL:
+            image_url_for_api = image_file_path
+
+
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[
@@ -196,7 +226,7 @@ class OllamaAPI:
             logger.exception(f"Error in image method")
             return None
 
-    def get_chat_completion_openai(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL):
+    def get_chat_completion_openai(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL) -> str | None:
         """
         Run a multi-turn chat completion using the OpenAI-compatible API and log the response.
         Appends the user's prompt and AI's response to self.session_history.
@@ -204,6 +234,9 @@ class OllamaAPI:
         Args:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
+
+        Returns:
+            str | None: The AI's message string or None if an error occurs.
         """
         self.session_history.append({"role": "user", "content": prompt})
         logger.debug(f"Calling OpenAI compatible get_chat_completion_openai with model: {model}")
@@ -219,12 +252,16 @@ class OllamaAPI:
             return ai_message
         except Exception as e:
             logger.exception(f"Error in get_chat_completion_openai")
+            # Clean up history if the call failed after adding user prompt
+            if self.session_history and self.session_history[-1]["role"] == "user" and self.session_history[-1]["content"] == prompt:
+                self.session_history.pop()
             return None
 
 
 def autogen_workflow(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
     """
     Run an autogen workflow using the AssistantAgent and UserProxyAgent.
+    This function initiates the workflow; output is typically handled by AutoGen to the console.
 
     Args:
         model (str): The model ID to use for the agents.
@@ -256,6 +293,7 @@ def autogen_workflow(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
 def run_conversable_agent(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
     """
     Run a ConversableAgent with a poetic system message.
+    This function initiates the interaction; output is typically handled by AutoGen to the console.
 
     Args:
         model (str): The model ID to use for the agent.

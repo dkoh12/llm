@@ -11,3 +11,14 @@ DEFAULT_TEXT_COMPLETION_MODEL = "codellama:latest"
 
 # Image paths (if you want to configure them)
 # DEFAULT_IMAGE_PATH = "./images/tesla-model-y-top.jpg"
+
+# LM Studio Configuration
+DEFAULT_LMSTUDIO_SERVER = "http://localhost:1234"
+# LM Studio typically doesn't require an API key for local instances,
+# but we can have a placeholder. The OpenAI client for LM Studio uses "lm-studio" by default.
+DEFAULT_LMSTUDIO_API_KEY = "lm-studio" 
+
+# Default Model Names for LM Studio (these are examples, adjust to your loaded models)
+DEFAULT_LMSTUDIO_CHAT_MODEL = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" # Example
+DEFAULT_LMSTUDIO_COMPLETION_MODEL = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" # Example
+DEFAULT_LMSTUDIO_EMBEDDING_MODEL = "nomic-ai/nomic-embed-text-v1.5-GGUF" # Example
