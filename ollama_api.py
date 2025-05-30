@@ -217,9 +217,7 @@ def conversable_agent(model: str = "codellama:latest"):
  
 if __name__=="__main__":
     api = OllamaAPI()
-
-    print(1)
-
+    
     # api.ollama_chat()
     # api.multimodal_1()
     # api.multimodal_2()
