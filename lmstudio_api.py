@@ -20,6 +20,7 @@ class LMStudioAPI:
             base_url=server + "/v1",
             api_key="lm-studio"  # required but ignored
         )
+        self.history = [{"role": "system", "content": "You are a helpful assistant."}]
 
     def get_lm_studio_models(self) -> None:
         """
@@ -169,34 +170,29 @@ class LMStudioAPI:
         except Exception as e:
             print(f"Error: {e}")
 
-    def get_chat_completion_openai(self) -> None:
+    def get_chat_completion_openai(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
-        Example: Send a multi-turn chat completion request using the OpenAI Python client and print the response.
-        """
-        chat_completion = self.client.chat.completions.create(        
-            model="llama-3.2-3b-instruct",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant."
-                },
-                {
-                    "role": "user",
-                    "content": "Who won the world series in 2020?",
-                },
-                {
-                    "role": "assistant",
-                    "content": "The Los Angeles Dodgers won the 2020 World Series."
-                },
-                {
-                    "role": "user",
-                    "content": "Where was it played?",
-                }
-            ],
-            temperature=0.7,
-        )
+        Run a multi-turn chat completion using the OpenAI-compatible API and print the response.
+        Appends the user's prompt and AI's response to self.history.
 
-        print(chat_completion.choices[0].message.content)
+        Args:
+            prompt (str): The user's prompt.
+            model (str): The model ID to use for chat.
+        """
+        # Append the user's prompt to the conversation history
+        self.history.append({"role": "user", "content": prompt})
+        try:
+            chat_completion = self.client.chat.completions.create(
+                model=model,
+                messages=self.history,
+                temperature=0.7,
+            )
+            ai_message = chat_completion.choices[0].message.content
+            print(ai_message)
+            # Append the AI's response to the conversation history
+            self.history.append({"role": "assistant", "content": ai_message})
+        except Exception as e:
+            print(f"Error: {e}")
 
 
 

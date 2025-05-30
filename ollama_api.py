@@ -4,34 +4,42 @@ import ollama
 from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
 
 class OllamaAPI:
-    def __init__(self, openai_base_url: str = "http://localhost:11434/v1", api_key: str = "ollama"):
+    def __init__(self, openai_base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", session_history: list = None):
         """
         Initialize the OllamaAPI client.
 
         Args:
             openai_base_url (str): The base URL for the Ollama OpenAI-compatible API.
             api_key (str): API key for authentication (default is "ollama").
+            session_history (list): Initial conversation history (list of dicts).
         """
         self.client = OpenAI(
             base_url=openai_base_url,
             api_key=api_key
         )
+        self.session_history =  [{"role": "system", "content": "You are a helpful assistant."}]
 
-    def ollama_chat(self, model: str = "llama3.2"):
+    def ollama_chat(self, prompt: str, model: str = "llama3.2"):
         """
-        Run a simple chat completion using the Ollama API and print the response.
+        Run a chat completion using the Ollama API and print the response.
+        Appends the user's prompt and AI's response to the session history.
 
         Args:
+            prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
+        # Append the user's prompt to the session history
+        self.session_history.append({"role": "user", "content": prompt})
+
         response = ollama.chat(
             model=model,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "What is the purpose of life?"},
-            ],
+            messages=self.session_history,
         )
-        print(response["message"]["content"])
+        ai_message = response["message"]["content"]
+        print(ai_message)
+
+        # Append the AI's response to the session history
+        self.session_history.append({"role": "assistant", "content": ai_message})
 
     def multimodal_1(self, model: str = "llava:7b"):
         """
@@ -72,30 +80,32 @@ class OllamaAPI:
             )
         print(res["message"]["content"])
 
-    def text_completion(self, model: str = "codellama:latest"):
+    def text_completion(self, prompt: str, model: str = "codellama:latest"):
         """
         Generate a text completion using the Ollama API and print the response.
 
         Args:
+            prompt (str): The prompt string to complete.
             model (str): The model ID to use for text completion.
         """
         result = ollama.generate(
             model=model,
-            prompt="// A c function to reverse a string",
+            prompt=prompt,
         )
         print(result["response"])
 
-    def openai_chat(self, model: str = "llama3.2:latest"):
+    def openai_chat(self, prompt: str, model: str = "llama3.2:latest"):
         """
         Run a chat completion using the OpenAI-compatible API and print the response.
 
         Args:
+            prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
         messages = [
             {
                 "role": "user",
-                "content": "Say this is a test"
+                "content": prompt
             }
         ]
         try:
@@ -133,37 +143,27 @@ class OllamaAPI:
         except Exception as e:
             print(e)
 
-    def get_chat_completion_openai(self, model: str = "llama3.2:latest"):
+    def get_chat_completion_openai(self, prompt: str, model: str = "llama3.2:latest"):
         """
         Run a multi-turn chat completion using the OpenAI-compatible API and print the response.
+        Appends the user's prompt and AI's response to self.history.
 
         Args:
+            prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
+        # Append the user's prompt to the conversation history
+        self.session_history.append({"role": "user", "content": prompt})
         try:
             chat_completion = self.client.chat.completions.create(
                 model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful assistant."
-                    },
-                    {
-                        "role": "user",
-                        "content": "Who won the world series in 2020?",
-                    },
-                    {
-                        "role": "assistant",
-                        "content": "The Los Angeles Dodgers won the 2020 World Series."
-                    },
-                    {
-                        "role": "user",
-                        "content": "Where was it played?",
-                    }
-                ],
+                messages=self.session_history,
                 temperature=0.7,
             )
-            print(chat_completion.choices[0].message.content)
+            ai_message = chat_completion.choices[0].message.content
+            print(ai_message)
+            # Append the AI's response to the conversation history
+            self.session_history.append({"role": "assistant", "content": ai_message})
         except Exception as e:
             print(e)
 
