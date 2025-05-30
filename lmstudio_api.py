@@ -5,6 +5,14 @@ from openai import OpenAI
 
 class LMStudioAPI:
     def __init__(self, server: str = "http://localhost:1234", api_key: str = "", openai_api: bool = False):
+        """
+        Initialize the LMStudioAPI client.
+
+        Args:
+            server (str): The base URL of the LM Studio server.
+            api_key (str): API key for authentication (not used by default).
+            openai_api (bool): Whether to use OpenAI-compatible endpoints.
+        """
         self.server = server
         self.api_key = api_key
         self.openai_api = openai_api
@@ -14,6 +22,10 @@ class LMStudioAPI:
         )
 
     def get_lm_studio_models(self) -> None:
+        """
+        Fetch and print the list of available models from the LM Studio server.
+        Uses OpenAI or native endpoint depending on the openai_api flag.
+        """
         if self.openai_api:
             api_endpoint = self.server + "/v1/models"
         else:
@@ -29,6 +41,12 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def get_single_model(self, model: str) -> None:
+        """
+        Fetch and print details for a single model.
+
+        Args:
+            model (str): The model ID to fetch details for.
+        """
         if self.openai_api:
             api_endpoint = self.server + f"/v1/models/{model}"
         else:
@@ -43,6 +61,13 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def call_chat_completions(self, message: list, model: str = "llama-3.2-3b-instruct") -> None:
+        """
+        Send a chat completion request to the LM Studio server and print the response.
+
+        Args:
+            message (list): List of message dicts (role/content) for the conversation.
+            model (str): Model ID to use for chat completion.
+        """
         if self.openai_api:
             api_endpoint = self.server + "/v1/chat/completions"
         else:
@@ -67,6 +92,13 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def completions(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
+        """
+        Send a text completion request to the LM Studio server and print the response.
+
+        Args:
+            prompt (str): The prompt string to complete.
+            model (str): Model ID to use for completion.
+        """
         if self.openai_api:
             api_endpoint = self.server + "/v1/completions"
         else:
@@ -93,6 +125,13 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def embeddings(self, input_text: str = "Some text to embed", model: str = "text-embedding-nomic-embed-text-v1.5") -> None:
+        """
+        Request embeddings for the given input text and print the embedding vector.
+
+        Args:
+            input_text (str): The text to embed.
+            model (str): Model ID to use for embeddings.
+        """
         if self.openai_api:
             api_endpoint = self.server + "/v1/embeddings"
         else:
@@ -121,6 +160,9 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def get_lm_studio_models_openai(self) -> None:
+        """
+        Fetch and print the list of models using the OpenAI Python client.
+        """
         try:
             models= self.client.models.list()
             pprint(models.data)
@@ -128,21 +170,9 @@ class LMStudioAPI:
             print(f"Error: {e}")
 
     def get_chat_completion_openai(self) -> None:
-
         """
-        messages=[
-                {
-                    "role": "system",
-                    "content": "Always answer in rhymes."
-                },
-                {
-                    "role": "user",
-                    "content": "Introduce yourself.",
-                }
-            ],
+        Example: Send a multi-turn chat completion request using the OpenAI Python client and print the response.
         """
-
-
         chat_completion = self.client.chat.completions.create(        
             model="llama-3.2-3b-instruct",
             messages=[
