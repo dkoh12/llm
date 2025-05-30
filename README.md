@@ -1,3 +1,5 @@
+# Local LLM
+
 Playing around with both LM Studio and Ollama.
 For sake of simplicity, not touching llama.cpp
 
