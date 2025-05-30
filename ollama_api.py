@@ -54,7 +54,7 @@ class OllamaAPI:
                 {
                     "role": "user",
                     "content": "Describe the image",
-                    "images": ['./tesla-model-y-top.jpg']
+                    "images": ['./images/tesla-model-y-top.jpg']
                 }
             ],
         )
@@ -67,7 +67,7 @@ class OllamaAPI:
         Args:
             model (str): The model ID to use for multimodal chat.
         """
-        with open('tesla-model-y-top.jpg', 'rb') as f:
+        with open('images/tesla-model-y-top.jpg', 'rb') as f:
             res = ollama.chat(
                 model=model,
                 messages=[
@@ -133,7 +133,7 @@ class OllamaAPI:
                         "role": "user",
                         "content": [
                             {"type": "text", "text": "What's in this image?"},
-                            {"type": "image_url", "image_url": "./tesla-model-y-top.jpg"},
+                            {"type": "image_url", "image_url": "./images/tesla-model-y-top.jpg"},
                         ]
                     }
                 ],
