@@ -44,4 +44,10 @@ python ollama_api.py
 Search up any python packages on PyPi
 https://pypi.org/project/pyautogen/#description
 
+## Playing with LLM
 
+To play with the overall LLM Agent / chatbot, run
+
+```
+python llm.py
+```
