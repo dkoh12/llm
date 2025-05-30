@@ -5,20 +5,20 @@ For sake of simplicity, not touching llama.cpp
 
 1. clone this repo
 
-2. download LM studio
-
-3. set up vitrual env (recommended)
+2. set up vitrual env (recommended)
 
 ```
 python -m venv venv
 source venv/bin/activate    # on windows, venv\Scripts\activate
 ```
 
-4. install dependencies
+3. install dependencies
 
 ```
 pip install -r requirements.txt
 ```
+
+4. download LM studio (https://lmstudio.ai/)
 
 run
 ```
@@ -27,7 +27,9 @@ python lmstudio_api.py
 
 ## Playing with Ollama
 
-5. run ollama server
+5. download Ollama (https://ollama.com/)
+
+6. run ollama server
 
 ```
 ollama run codellama:latest
