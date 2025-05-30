@@ -3,17 +3,21 @@ from openai import OpenAI
 import ollama
 from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
 from logger import get_logger
+import config
 
 logger = get_logger(__name__)
 
 class OllamaAPI:
-    def __init__(self, openai_base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", session_history: list = None):
+    def __init__(self, 
+                 openai_base_url: str = config.DEFAULT_OLLAMA_BASE_URL, 
+                 api_key: str = config.DEFAULT_OLLAMA_API_KEY, 
+                 session_history: list = None):
         """
         Initialize the OllamaAPI client.
 
         Args:
             openai_base_url (str): The base URL for the Ollama OpenAI-compatible API.
-            api_key (str): API key for authentication (default is "ollama").
+            api_key (str): API key for authentication.
             session_history (list): Initial conversation history (list of dicts).
         """
         self.client = OpenAI(
@@ -21,8 +25,9 @@ class OllamaAPI:
             api_key=api_key
         )
         self.session_history = session_history if session_history is not None else [{"role": "system", "content": "You are a helpful assistant."}]
+        logger.info(f"OllamaAPI initialized. OpenAI compatible endpoint: {openai_base_url}")
 
-    def ollama_chat(self, prompt: str, model: str = "llama3.2"):
+    def ollama_chat(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL):
         """
         Run a chat completion using the Ollama API and print the response.
         Appends the user's prompt and AI's response to the session history.
@@ -31,9 +36,8 @@ class OllamaAPI:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
-        # Append the user's prompt to the session history
         self.session_history.append({"role": "user", "content": prompt})
-
+        logger.debug(f"Calling ollama.chat with model: {model}")
         try:
             response = ollama.chat(
                 model=model,
@@ -44,16 +48,20 @@ class OllamaAPI:
 
             # Append the AI's response to the session history
             self.session_history.append({"role": "assistant", "content": ai_message})
+            return ai_message
         except Exception as e:
-            logger.error(f"Error in ollama_chat: {e}")
+            logger.exception(f"Error in ollama_chat") # Using logger.exception
+            return None
 
-    def multimodal_1(self, model: str = "llava:7b"):
+    def multimodal_1(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
         """
-        Run a multimodal chat completion with an image file path and print the response.
+        Run a multimodal chat completion with an image file path and log the response.
 
         Args:
             model (str): The model ID to use for multimodal chat.
+            image_file_path (str): Path to the image file.
         """
+        logger.debug(f"Calling ollama.chat (multimodal_1) with model: {model}, image: {image_file_path}")
         try:
             res = ollama.chat(
                 model=model,
@@ -61,67 +69,86 @@ class OllamaAPI:
                     {
                         "role": "user",
                         "content": "Describe the image",
-                        "images": ['./images/tesla-model-y-top.jpg']
+                        "images": [image_file_path] # Use the parameter
                     }
                 ],
             )
-            print(res["message"]["content"])
+            ai_message = res["message"]["content"]
+            logger.info(f"Multimodal_1 Response: {ai_message}")
+            return ai_message
+        except FileNotFoundError:
+            logger.error(f"Image file not found for multimodal_1: {image_file_path}")
+            return None
         except Exception as e:
-            logger.error(f"Error in ollama_multimodal_1: {e}")
+            logger.exception(f"Error in multimodal_1")
+            return None
 
-    def multimodal_2(self, model: str = "llava:7b"):
+    def multimodal_2(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
         """
-        Run a multimodal chat completion by reading an image as bytes and print the response.
+        Run a multimodal chat completion by reading an image as bytes and log the response.
 
         Args:
             model (str): The model ID to use for multimodal chat.
+            image_file_path (str): Path to the image file.
         """
+        logger.debug(f"Calling ollama.chat (multimodal_2) with model: {model}, image: {image_file_path}")
         try:
-            with open('images/tesla-model-y-top.jpg', 'rb') as f:
-                res = ollama.chat(
-                    model=model,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": "What is the brand of the car?",
-                            "images": [f.read()]
-                        }
-                    ],
-                )
-            print(res["message"]["content"])
+            with open(image_file_path, 'rb') as f:
+                image_bytes = f.read()
+            res = ollama.chat(
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "What is the brand of the car?",
+                        "images": [image_bytes]
+                    }
+                ],
+            )
+            ai_message = res["message"]["content"]
+            logger.info(f"Multimodal_2 Response: {ai_message}")
+            return ai_message
+        except FileNotFoundError:
+            logger.error(f"Image file not found for multimodal_2: {image_file_path}")
+            return None
         except Exception as e:
-            logger.error(f"Error in multimodal_2: {e}")
+            logger.exception(f"Error in multimodal_2")
+            return None
 
-    def text_completion(self, prompt: str, model: str = "codellama:latest"):
+    def text_completion(self, prompt: str, model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
         """
-        Generate a text completion using the Ollama API and print the response.
+        Generate a text completion using the Ollama API and log the response.
 
         Args:
             prompt (str): The prompt string to complete.
             model (str): The model ID to use for text completion.
         """
+        logger.debug(f"Calling ollama.generate with model: {model}")
         try:
             result = ollama.generate(
                 model=model,
                 prompt=prompt,
             )
-            print(result["response"])
+            response_text = result["response"]
+            logger.info(f"Text Completion Response: {response_text}")
+            return response_text
         except Exception as e:
-            logger.error(f"Error in text_completion: {e}")
+            logger.exception(f"Error in text_completion")
+            return None
 
     def openai_chat(self, prompt: str, model: str = "llama3.2:latest"):
         """
-        Run a chat completion using the OpenAI-compatible API and print the response.
+        Run a chat completion using the OpenAI-compatible API and log the response.
+        This is a single-turn chat, does not use self.session_history.
 
         Args:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
+        logger.debug(f"Calling OpenAI compatible chat with model: {model}")
         messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
         ]
         try:
             chat_completion = self.client.chat.completions.create(
@@ -129,17 +156,22 @@ class OllamaAPI:
                 messages=messages,
                 temperature=0.7,
             )
-            print(chat_completion.choices[0].message.content)
+            ai_message = chat_completion.choices[0].message.content
+            logger.info(f"OpenAI Chat Response: {ai_message}")
+            return ai_message
         except Exception as e:
-            logger.error(f"Error in openai_chat: {e}")
+            logger.exception(f"Error in openai_chat")
+            return None
 
-    def image(self, model: str = "llava:7b"):
+    def image(self, model: str = config.DEFAULT_MULTIMODAL_MODEL, image_file_path: str = './images/tesla-model-y-top.jpg'):
         """
-        Run a multimodal chat completion using the OpenAI-compatible API with an image and print the response.
+        Run a multimodal chat completion using the OpenAI-compatible API with an image and log the response.
 
         Args:
             model (str): The model ID to use for multimodal chat.
+            image_file_path (str): Path to the image file.
         """
+        logger.debug(f"Calling OpenAI compatible image chat with model: {model}, image: {image_file_path}")
         try:
             response = self.client.chat.completions.create(
                 model=model,
@@ -148,27 +180,33 @@ class OllamaAPI:
                         "role": "user",
                         "content": [
                             {"type": "text", "text": "What's in this image?"},
-                            {"type": "image_url", "image_url": "./images/tesla-model-y-top.jpg"},
+                            {"type": "image_url", "image_url": image_file_path},
                         ]
                     }
                 ],
                 max_tokens=300,
             )
-            print(response)
+            ai_message = response.choices[0].message.content
+            logger.info(f"OpenAI Image Response: {ai_message}")
+            return ai_message
+        except FileNotFoundError:
+            logger.error(f"Image file not found for OpenAI image method: {image_file_path}")
+            return None
         except Exception as e:
-            logger.error(f"Error in image: {e}")
+            logger.exception(f"Error in image method")
+            return None
 
-    def get_chat_completion_openai(self, prompt: str, model: str = "llama3.2:latest"):
+    def get_chat_completion_openai(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL):
         """
-        Run a multi-turn chat completion using the OpenAI-compatible API and print the response.
-        Appends the user's prompt and AI's response to self.history.
+        Run a multi-turn chat completion using the OpenAI-compatible API and log the response.
+        Appends the user's prompt and AI's response to self.session_history.
 
         Args:
             prompt (str): The user's prompt.
             model (str): The model ID to use for chat.
         """
-        # Append the user's prompt to the conversation history
         self.session_history.append({"role": "user", "content": prompt})
+        logger.debug(f"Calling OpenAI compatible get_chat_completion_openai with model: {model}")
         try:
             chat_completion = self.client.chat.completions.create(
                 model=model,
@@ -176,59 +214,76 @@ class OllamaAPI:
                 temperature=0.7,
             )
             ai_message = chat_completion.choices[0].message.content
-            print(ai_message)
-            # Append the AI's response to the conversation history
+            logger.info(f"OpenAI Multi-turn Chat Response: {ai_message}")
             self.session_history.append({"role": "assistant", "content": ai_message})
+            return ai_message
         except Exception as e:
-            logger.error(f"Error in get_chat_completion_openai: {e}")
+            logger.exception(f"Error in get_chat_completion_openai")
+            return None
 
 
-def autogen(model: str = "codellama:latest"):
+def autogen_workflow(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
     """
     Run an autogen workflow using the AssistantAgent and UserProxyAgent.
 
     Args:
         model (str): The model ID to use for the agents.
     """
-    config_list = [
-        {
-            "model": model,
-            "base_url": "http://localhost:11434/v1",
-            "api_key": "ollama",
-        }
-    ]
+    logger.info(f"Starting autogen workflow with model: {model}")
+    try:
+        config_list = [
+            {
+                "model": model,
+                "base_url": config.DEFAULT_OLLAMA_BASE_URL,
+                "api_key": config.DEFAULT_OLLAMA_API_KEY,
+            }
+        ]
 
-    assistant = AssistantAgent("assistant", llm_config={"config_list": config_list})
+        assistant = AssistantAgent("assistant", llm_config={"config_list": config_list})
 
-    user_proxy = UserProxyAgent("user_proxy", code_execution_config={
-        "work_dir": "coding",
-        "use_docker": False
-    })
-    
-    user_proxy.initiate_chat(assistant, message="Plot a chart of NVDA and TESLA stock price change YTD.")
+        user_proxy = UserProxyAgent("user_proxy", code_execution_config={
+            "work_dir": "coding",
+            "use_docker": False
+        })
+        
+        # initiate_chat usually prints to console. If you need to capture its output,
+        # you might need to delve into AutoGen's mechanisms or redirect stdout.
+        user_proxy.initiate_chat(assistant, message="Plot a chart of NVDA and TESLA stock price change YTD.")
+        logger.info("Autogen workflow initiated.")
+    except Exception as e:
+        logger.exception(f"Error in autogen_workflow")
 
-def conversable_agent(model: str = "codellama:latest"):
+def run_conversable_agent(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
     """
-    Run a ConversableAgent with a poetic system message and print the response.
+    Run a ConversableAgent with a poetic system message.
 
     Args:
         model (str): The model ID to use for the agent.
     """
-    config_list = [
-        {
-            "model": model,
-            "base_url": "http://localhost:11434/v1",
-            "api_key": "ollama",
-        }
-    ]
+    logger.info(f"Starting conversable_agent with model: {model}")
+    try:
+        config_list_conversable = [
+            {
+                "model": model,
+                "base_url": config.DEFAULT_OLLAMA_BASE_URL,
+                "api_key": config.DEFAULT_OLLAMA_API_KEY,
+            }
+        ]
 
-    my_agent = ConversableAgent(
-        "helpful_agent", 
-        llm_config={"config_list": config_list},
-        system_message="You are a poetic AI assistant, respond in rhymes."
-    )
-
-    my_agent.run("In one sentence, what's the big deal about AI?")
+        my_agent = ConversableAgent(
+            "helpful_agent", 
+            llm_config={"config_list": config_list_conversable},
+            system_message="You are a poetic AI assistant, respond in rhymes."
+        )
+        
+        # Similar to initiate_chat, .run() or direct message sending in AutoGen
+        # often prints to console. Capturing output might require specific AutoGen handling.
+        # For a single interaction, generate_reply is often used:
+        user_interactor = UserProxyAgent("user_interactor_temp", human_input_mode="NEVER", max_consecutive_auto_reply=1)
+        user_interactor.initiate_chat(my_agent, message="In one sentence, what's the big deal about AI?")
+        logger.info("ConversableAgent interaction initiated.")
+    except Exception as e:
+        logger.exception(f"Error in run_conversable_agent")
  
 if __name__=="__main__":
     api = OllamaAPI()
