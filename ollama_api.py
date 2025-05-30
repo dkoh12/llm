@@ -2,6 +2,9 @@ import pprint
 from openai import OpenAI
 import ollama
 from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 class OllamaAPI:
     def __init__(self, openai_base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", session_history: list = None):
@@ -42,7 +45,7 @@ class OllamaAPI:
             # Append the AI's response to the session history
             self.session_history.append({"role": "assistant", "content": ai_message})
         except Exception as e:
-            print(f"Error in ollama_chat: {e}")
+            logger.error(f"Error in ollama_chat: {e}")
 
     def multimodal_1(self, model: str = "llava:7b"):
         """
@@ -51,17 +54,20 @@ class OllamaAPI:
         Args:
             model (str): The model ID to use for multimodal chat.
         """
-        res = ollama.chat(
-            model=model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Describe the image",
-                    "images": ['./images/tesla-model-y-top.jpg']
-                }
-            ],
-        )
-        print(res["message"]["content"])
+        try:
+            res = ollama.chat(
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "Describe the image",
+                        "images": ['./images/tesla-model-y-top.jpg']
+                    }
+                ],
+            )
+            print(res["message"]["content"])
+        except Exception as e:
+            logger.error(f"Error in ollama_multimodal_1: {e}")
 
     def multimodal_2(self, model: str = "llava:7b"):
         """
@@ -70,18 +76,21 @@ class OllamaAPI:
         Args:
             model (str): The model ID to use for multimodal chat.
         """
-        with open('images/tesla-model-y-top.jpg', 'rb') as f:
-            res = ollama.chat(
-                model=model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": "What is the brand of the car?",
-                        "images": [f.read()]
-                    }
-                ],
-            )
-        print(res["message"]["content"])
+        try:
+            with open('images/tesla-model-y-top.jpg', 'rb') as f:
+                res = ollama.chat(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": "What is the brand of the car?",
+                            "images": [f.read()]
+                        }
+                    ],
+                )
+            print(res["message"]["content"])
+        except Exception as e:
+            logger.error(f"Error in multimodal_2: {e}")
 
     def text_completion(self, prompt: str, model: str = "codellama:latest"):
         """
@@ -91,11 +100,14 @@ class OllamaAPI:
             prompt (str): The prompt string to complete.
             model (str): The model ID to use for text completion.
         """
-        result = ollama.generate(
-            model=model,
-            prompt=prompt,
-        )
-        print(result["response"])
+        try:
+            result = ollama.generate(
+                model=model,
+                prompt=prompt,
+            )
+            print(result["response"])
+        except Exception as e:
+            logger.error(f"Error in text_completion: {e}")
 
     def openai_chat(self, prompt: str, model: str = "llama3.2:latest"):
         """
@@ -119,7 +131,7 @@ class OllamaAPI:
             )
             print(chat_completion.choices[0].message.content)
         except Exception as e:
-            print(e)
+            logger.error(f"Error in openai_chat: {e}")
 
     def image(self, model: str = "llava:7b"):
         """
@@ -144,7 +156,7 @@ class OllamaAPI:
             )
             print(response)
         except Exception as e:
-            print(e)
+            logger.error(f"Error in image: {e}")
 
     def get_chat_completion_openai(self, prompt: str, model: str = "llama3.2:latest"):
         """
@@ -168,7 +180,7 @@ class OllamaAPI:
             # Append the AI's response to the conversation history
             self.session_history.append({"role": "assistant", "content": ai_message})
         except Exception as e:
-            print(e)
+            logger.error(f"Error in get_chat_completion_openai: {e}")
 
 
 def autogen(model: str = "codellama:latest"):

@@ -1,7 +1,12 @@
 import requests
 import json
-from pprint import pprint
-from openai import OpenAI
+from pprint import pprint # Keep for printing model lists if desired, or replace with logger
+from openai import OpenAI # Removed APIError, APIConnectionError
+# Removed requests.exceptions as we'll use general Exception
+from logger import get_logger # Assuming your logger file is named logger.py
+
+# Get a logger for this module
+logger = get_logger(__name__)
 
 class LMStudioAPI:
     def __init__(self, server: str = "http://localhost:1234", api_key: str = "", openai_api: bool = False, session_history: list = None):
@@ -22,6 +27,7 @@ class LMStudioAPI:
             api_key="lm-studio" # Default API key for LM Studio's OpenAI compatible endpoint
         )
         self.session_history = session_history if session_history is not None else [{"role": "system", "content": "You are a helpful assistant."}]
+        logger.info(f"LMStudioAPI initialized. OpenAI compatible: {self.openai_api}, Server: {self.server}")
 
     def get_lm_studio_models(self) -> None:
         """
@@ -32,17 +38,17 @@ class LMStudioAPI:
             api_endpoint = self.server + "/v1/models"
         else:
             api_endpoint = self.server + "/api/v0/models"
-
+        logger.debug(f"Fetching models from: {api_endpoint}")
         try:
-            response = requests.get(api_endpoint)
-            if response.status_code == 200:
-                data = response.json()
-                pprint([model["id"] for model in data.get("data", [])])
-            else:
-                print(f"Error: {response.status_code}")
-                print(response.text)
+            response = requests.get(api_endpoint, timeout=10)
+            response.raise_for_status() # Still good to check for HTTP errors
+            data = response.json()
+            # pprint([model["id"] for model in data.get("data", [])]) # User-facing output
+            print("Available models:") # User-facing output
+            for model in data.get("data", []): # User-facing output
+                print(f"  - {model.get('id')}") # User-facing output
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in get_lm_studio_models: {e}")
 
     def get_single_model(self, model: str) -> None:
         """
@@ -55,16 +61,13 @@ class LMStudioAPI:
             api_endpoint = self.server + f"/v1/models/{model}"
         else:
             api_endpoint = self.server + f"/api/v0/models/{model}"
-
+        logger.debug(f"Fetching single model '{model}' from: {api_endpoint}")
         try:
-            response = requests.get(api_endpoint)
-            if response.status_code == 200:
-                pprint(response.json())
-            else:
-                print(f"Error: {response.status_code}")
-                print(response.text)
+            response = requests.get(api_endpoint, timeout=10)
+            response.raise_for_status()
+            pprint(response.json()) # User-facing output (pprint is fine for complex dicts)
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in get_single_model: {e}")
 
     def call_chat_completions(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
@@ -82,7 +85,7 @@ class LMStudioAPI:
             api_endpoint = self.server + "/v1/chat/completions"
         else:
             api_endpoint = self.server + "/api/v0/chat/completions"
-
+        logger.debug(f"Calling chat completions at: {api_endpoint} with model: {model}")
         headers = {'Content-Type': 'application/json'}
         payload = {
             "model": model,
@@ -91,20 +94,16 @@ class LMStudioAPI:
             "max_tokens": -1,
             "stream": False
         }
-
         try:
-            response = requests.post(api_endpoint, headers=headers, json=payload)
-            if response.status_code == 200:
-                data = response.json()
-                answer = data["choices"][0]["message"]["content"]
-                print(answer)
-                # Append the AI's response to the conversation history
-                self.session_history.append({"role": "assistant", "content": answer})
-            else:
-                print(f"Error: {response.status_code}")
-                print(response.text)
+            response = requests.post(api_endpoint, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            answer = data["choices"][0]["message"]["content"]
+            print(answer) # User-facing output
+            # Append the AI's response to the conversation history
+            self.session_history.append({"role": "assistant", "content": answer})
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in call_chat_completions: {e}")
 
     def completions(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
@@ -122,7 +121,7 @@ class LMStudioAPI:
             api_endpoint = self.server + "/v1/completions"
         else:
             api_endpoint = self.server + "/api/v0/completions"
-
+        logger.debug(f"Calling completions at: {api_endpoint} with model: {model}")
         headers = {'Content-Type': 'application/json'}
         payload = {
             "model": model,
@@ -132,21 +131,17 @@ class LMStudioAPI:
             "stream": False,
             "stop": "\n"
         }
-
         try:
-            response = requests.post(api_endpoint, headers=headers, json=payload)
-            if response.status_code == 200:
-                data = response.json()
-                answer = data["choices"][0]["text"]
-                complete_sentence = prompt + answer # Or just answer, depending on desired output
-                print(complete_sentence)
-                # Append the AI's response to the conversation history
-                self.session_history.append({"role": "assistant", "content": answer})
-            else:
-                print(f"Error: {response.status_code}")
-                print(response.text)
+            response = requests.post(api_endpoint, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            answer = data["choices"][0]["text"]
+            complete_sentence = prompt + answer # Or just answer, depending on desired output
+            print(complete_sentence) # User-facing output
+            # Append the AI's response to the conversation history
+            self.session_history.append({"role": "assistant", "content": answer})
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in completions: {e}")
 
     def embeddings(self, input_text: str = "Some text to embed", model: str = "text-embedding-nomic-embed-text-v1.5") -> None:
         """
@@ -160,38 +155,31 @@ class LMStudioAPI:
             api_endpoint = self.server + "/v1/embeddings"
         else:
             api_endpoint = self.server + "/api/v0/embeddings"
-        
+        logger.debug(f"Requesting embeddings from: {api_endpoint} for model: {model}")
         headers = {'Content-Type': 'application/json'}
-        payload = {
-            "model": model,
-            "input": input_text
-        }
-
+        payload = {"model": model, "input": input_text}
         try:
-            response = requests.post(api_endpoint, headers=headers, json=payload)
-            if response.status_code == 200:
-                data = response.json()
-                answer = data["data"][0]["embedding"]
-                print(answer)
-            elif response.status_code == 404:
-                data = response.json()
-                error_message = data.get("error", {}).get("message", "Not found")
-                print(error_message)
-            else:
-                print("Error: ", response.status_code)
-                print(response.text)
+            response = requests.post(api_endpoint, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            answer = data["data"][0]["embedding"]
+            print(answer) # User-facing output
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in embeddings: {e}")
 
     def get_lm_studio_models_openai(self) -> None:
         """
         Fetch and print the list of models using the OpenAI Python client.
         """
+        logger.debug("Fetching models using OpenAI client.")
         try:
-            models= self.client.models.list()
-            pprint(models.data)
+            models_response = self.client.models.list()
+            # pprint(models_response.data) # User-facing output
+            print("Available OpenAI-compatible models:") # User-facing output
+            for model_data in models_response.data: # User-facing output
+                print(f"  - {model_data.id}") # User-facing output
         except Exception as e:
-            print(f"Error: {e}")
+            logger.exception(f"An error occurred in get_lm_studio_models_openai: {e}")
 
     def get_chat_completion_openai(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
@@ -205,6 +193,7 @@ class LMStudioAPI:
         # Ensure self.session_history exists (already handled by __init__)
         # Append the user's prompt to the conversation history
         self.session_history.append({"role": "user", "content": prompt})
+        logger.debug(f"Calling OpenAI chat completion with model: {model}")
         try:
             chat_completion = self.client.chat.completions.create(
                 model=model,
@@ -212,29 +201,26 @@ class LMStudioAPI:
                 temperature=0.7,
             )
             ai_message = chat_completion.choices[0].message.content
-            print(ai_message)
+            print(ai_message) # User-facing output
             # Append the AI's response to the conversation history
             self.session_history.append({"role": "assistant", "content": ai_message})
         except Exception as e:
-            print(f"Error: {e}")
-
+            logger.exception(f"An error occurred in get_chat_completion_openai: {e}")
 
 if __name__=="__main__":
-    lm_studio_api = LMStudioAPI(openai_api=False)
+    # To see debug logs from this module for testing:
+    # import logging
+    # logger.setLevel(logging.DEBUG) # Set level for this module's logger
+    # if logger.hasHandlers(): # Set level for its handler too
+    #    logger.handlers[0].setLevel(logging.DEBUG)
 
-    # lm_studio_api.get_lm_studio_models()
-    # lm_studio_api.get_single_model(model="llama-3.2-3b-instruct") # Replace with an actual model ID if needed
+    lm_studio_api_native = LMStudioAPI(openai_api=False)
+    # lm_studio_api_native.get_lm_studio_models()
+    # lm_studio_api_native.call_chat_completions("Tell me a joke about a computer.")
+    # logger.debug(f"LM Studio Native History: {lm_studio_api_native.session_history}")
 
-    # lm_studio_api.call_chat_completions(prompt="Hello there!")
-    # print(f"Session History: {lm_studio_api.session_history}")
-
-    # lm_studio_api.completions(prompt="Once upon a time, in a land far away")
-    # print(f"Session History after completion: {lm_studio_api.session_history}")
-    
     # lm_studio_api_openai = LMStudioAPI(openai_api=True)
     # lm_studio_api_openai.get_lm_studio_models_openai()
-    # lm_studio_api_openai.get_chat_completion_openai(prompt="Tell me a story about a robot.")
-    # print(f"OpenAI Session History: {lm_studio_api_openai.session_history}")
-
-    # lm_studio_api.embeddings(input_text="This is a test sentence for embeddings.")
+    # lm_studio_api_openai.get_chat_completion_openai("What's the weather like in space?")
+    # logger.debug(f"LM Studio OpenAI History: {lm_studio_api_openai.session_history}")
 
