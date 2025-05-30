@@ -4,6 +4,12 @@ import threading
 import time
 import sys
 
+def print_system(msg: str):
+    """
+    Print system messages in cyan color for better visibility.
+    """
+    print(f"\033[96m{msg}\033[0m")
+
 class LLMUnifiedAgent:
     """
     A unified agent interface to interact with either Ollama or LM Studio APIs.
@@ -28,9 +34,9 @@ class LLMUnifiedAgent:
     def _progress_bar(self, stop_event: threading.Event):
         spinner = ['|', '/', '-', '\\']
         idx = 0
-        print("Waiting for response ", end='', flush=True)
+        print_system("Waiting for response ")
         while not stop_event.is_set():
-            print(spinner[idx % len(spinner)], end='\b', flush=True)
+            print(f"\033[96m{spinner[idx % len(spinner)]}\033[0m", end='\b', flush=True)
             idx += 1
             time.sleep(0.1)
         print(" ", end='\r', flush=True)
@@ -63,7 +69,7 @@ class LLMUnifiedAgent:
                 else:
                     self.api.call_chat_completions(messages)
             else:
-                print("Unknown provider.")
+                print_system("Unknown provider.")
         finally:
             stop_event.set()
             progress_thread.join()
@@ -91,19 +97,19 @@ class LLMUnifiedAgent:
                 else:
                     self.api.completions(prompt)
             else:
-                print("Unknown provider.")
+                print_system("Unknown provider.")
         finally:
             stop_event.set()
             progress_thread.join()
 
 if __name__ == "__main__":
     # Example usage
-    print("Choose provider: [ollama/lmstudio]")
+    print_system("Choose provider: [ollama/lmstudio]")
     provider = input().strip().lower()
     agent = LLMUnifiedAgent(provider=provider)
 
-    print("Type 'chat' for chat, 'completion' for text completion, or 'exit' to quit.")
-    while True:
+    while True:    
+        print_system("Type 'chat' for chat, 'completion' for text completion, or 'exit' to quit.")
         cmd = input("Command: ").strip().lower()
         if cmd == "exit":
             break
@@ -114,4 +120,4 @@ if __name__ == "__main__":
             prompt = input("Your prompt: ")
             agent.text_completion(prompt)
         else:
-            print("Unknown command.")
+            print_system("Unknown command.")
