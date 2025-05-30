@@ -61,14 +61,18 @@ class LMStudioAPI:
         except Exception as e:
             print(f"Error: {e}")
 
-    def call_chat_completions(self, message: list, model: str = "llama-3.2-3b-instruct") -> None:
+    def call_chat_completions(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
         Send a chat completion request to the LM Studio server and print the response.
+        Appends the user's prompt and AI's response to self.history.
 
         Args:
-            message (list): List of message dicts (role/content) for the conversation.
+            prompt (str): The user's prompt.
             model (str): Model ID to use for chat completion.
         """
+        # Append the user's prompt to the conversation history
+        self.history.append({"role": "user", "content": prompt})
+
         if self.openai_api:
             api_endpoint = self.server + "/v1/chat/completions"
         else:
@@ -77,7 +81,7 @@ class LMStudioAPI:
         headers = {'Content-Type': 'application/json'}
         payload = {
             "model": model,
-            "messages": message,
+            "messages": self.history,
             "temperature": 0.7,
             "max_tokens": -1,
             "stream": False
@@ -89,17 +93,23 @@ class LMStudioAPI:
                 data = response.json()
                 answer = data["choices"][0]["message"]["content"]
                 print(answer)
+                # Append the AI's response to the conversation history
+                self.history.append({"role": "assistant", "content": answer})
         except Exception as e:
             print(f"Error: {e}")
 
     def completions(self, prompt: str, model: str = "llama-3.2-3b-instruct") -> None:
         """
         Send a text completion request to the LM Studio server and print the response.
+        Appends the user's prompt and AI's response to self.history.
 
         Args:
             prompt (str): The prompt string to complete.
             model (str): Model ID to use for completion.
         """
+        # Append the user's prompt to the conversation history
+        self.history.append({"role": "user", "content": prompt})
+
         if self.openai_api:
             api_endpoint = self.server + "/v1/completions"
         else:
@@ -120,8 +130,10 @@ class LMStudioAPI:
             if response.status_code == 200:
                 data = response.json()
                 answer = data["choices"][0]["text"]
-                complete_sentence = payload["prompt"] + answer
+                complete_sentence = prompt + answer
                 print(complete_sentence)
+                # Append the AI's response to the conversation history
+                self.history.append({"role": "assistant", "content": answer})
         except Exception as e:
             print(f"Error: {e}")
 
@@ -197,18 +209,9 @@ class LMStudioAPI:
 
 
 if __name__=="__main__":
-    server = "http://localhost:1234"
-    api_key = "" # nothing
-
-    lm_studio_api = LMStudioAPI(server=server, api_key=api_key, openai_api=False)
+    lm_studio_api = LMStudioAPI(openai_api=False)
 
     # lm_studio_api.get_lm_studio_models()
-
-
-    client = OpenAI(
-        base_url=server + "/v1",
-        api_key="lm-studio" # required but ignored
-    )
 
     # lm_studio_api.get_lm_studio_models_openai()
 
@@ -216,30 +219,7 @@ if __name__=="__main__":
 
     #get_single_model(server, model="llama-3.2-3b-instruct")
 
-    history = [
-        {
-            "role": "system",
-            "content": "You are a helpful assistant."
-        }
-    ]
-
-    """
-    new_message = {
-        "role": "user",
-        "content": "What is the capital of the United States?"
-    }"
-    """
-
-    # seems like this is better than completion
-    new_message = {
-        "role": "user",
-        "content": "the meaning of life is"
-    }
-
-    history.append(new_message)
     #call_chat_completions(server, history)  
-
-    prompt = "The meaning of life is"
     #completions(server, prompt)
 
     #embeddings(server)
