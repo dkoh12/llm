@@ -41,7 +41,7 @@ uv pip sync requirements.txt # Or requirements-dev.txt for development
 
 2. download local LLM models from LM Studio
 
-run
+runTo interact only with LM Studio LLM Agent / chatbot, run
 ```
 python src/lmstudio_api.py
 ```
@@ -58,18 +58,16 @@ python src/lmstudio_api.py
 ollama run codellama:latest
 ```
 
-run
+To interact only with Ollama LLM Agent / chatbot, run
 ```
 python src/ollama_api.py
 ```
 
-Note - Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink out there.
-This repo does not come with that.
+Note - Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink. This repo does not come with that.
 
 ## Playing with LLM
 
 To play with the overall LLM Agent / chatbot, run
-
 ```
 python llm.py
 ```
@@ -87,6 +85,8 @@ Available Commands
   - To switch between Ollama and LMStudio
 
 Note - inference is kind of slow despite running the model on localhost
+
+LLM.py is a wrapper around both Ollama and LM Studio
 
 ## Running Tests
 
