@@ -2,9 +2,16 @@ import ollama
 from autogen import AssistantAgent, ConversableAgent, UserProxyAgent
 from openai import OpenAI
 
-import library.config as config
-from library.library import print_system
-from library.logger import get_logger
+try:
+    # this works when imported by llm.py
+    from .library import config
+    from .library.library import print_system
+    from .library.logger import get_logger
+except ImportError:
+    # this works when running directly from /src directory
+    import library.config as config
+    from library.library import print_system
+    from library.logger import get_logger
 
 logger = get_logger(__name__)
 
