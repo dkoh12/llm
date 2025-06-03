@@ -1,6 +1,6 @@
-import config
-from library import print_system
-from logger import get_logger
+import src.library.config as config
+from src.library.library import print_system
+from src.library.logger import get_logger
 import requests
 from pprint import pprint
 from openai import OpenAI

@@ -1,7 +1,7 @@
 from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
-import config
-from library import print_system
-from logger import get_logger
+import src.library.config as config
+from src.library.library import print_system
+from src.library.logger import get_logger
 from openai import OpenAI
 import ollama
 
