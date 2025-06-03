@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from ollama_api import OllamaAPI  # Assuming your OllamaAPI class is in ollama_api.py
 
 

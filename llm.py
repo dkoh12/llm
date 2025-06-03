@@ -1,9 +1,10 @@
-from src.ollama_api import OllamaAPI
-from src.library.library import print_system
-from src.lmstudio_api import LMStudioAPI
+import sys
 import threading
 import time
-import sys
+
+from src.library.library import print_system
+from src.lmstudio_api import LMStudioAPI
+from src.ollama_api import OllamaAPI
 
 
 class LLMUnifiedAgent:

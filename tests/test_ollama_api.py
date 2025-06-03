@@ -1,4 +1,5 @@
 import unittest
+
 from ollama_api import OllamaAPI
 
 

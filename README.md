@@ -17,17 +17,13 @@ Vibecoded with Github Copilot - GPT-4.1, Gemini 2.5 Pro, Claude Opus 4
 
 1. clone this repo
 
-2. Install `uv` - fast python package manager. This is optional as pip is fine too.
-`pip install uv`
+2. Install `uv` - fast python package manager.
+```
+pip install uv
+```
 
 3. set up virtual env (recommended)
 
-```
-python -m venv venv
-source venv/bin/activate    # on windows, venv\Scripts\activate
-```
-
-or you can use `uv`
 ```
 uv venv
 source venv/bin/activate    # on windows, venv\Scripts\activate
@@ -36,12 +32,7 @@ source venv/bin/activate    # on windows, venv\Scripts\activate
 4. install dependencies
 
 ```
-pip install -r requirements.txt
-```
-
-or
-```
-uv pip install -r requirements.txt
+uv pip sync requirements.txt # Or requirements-dev.txt for development
 ```
 
 ## Playing with LM Studio
@@ -49,7 +40,7 @@ uv pip install -r requirements.txt
 1. download LM studio (https://lmstudio.ai/)
 
 2. download local LLM models from LM Studio
-   
+
 run
 ```
 python lmstudio_api.py
@@ -72,8 +63,8 @@ run
 python ollama_api.py
 ```
 
-Note Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink out there.
-This repo does not come with that. 
+Note - Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink out there.
+This repo does not come with that.
 
 ## Playing with LLM
 
@@ -116,14 +107,23 @@ Make sure your LM Studio and/or Ollama servers are running before running the te
 
 ## Linting
 
-Linting is done with ruff. It's not yet hooked up to git hook.
+Linting is done with ruff and automatically runs on git commit via pre-commit hooks.
 
+### Manual linting:
 ```
+ruff check .
 ruff check . --fix
+ruff format .
 ```
 
+### Setup pre-commit hooks:
 ```
-ruff format .
+pre-commit install
+```
+
+### Run pre-commit manually:
+```
+pre-commit run --all-files
 ```
 
 ## Project Management

@@ -1,8 +1,9 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from lmstudio_api import (
     LMStudioAPI,
-)  # Assuming your LMStudioAPI class is in lmstudio_api.py
+)
 
 
 # Helper to create a mock requests.Response object
