@@ -25,7 +25,7 @@ class TestOllamaAPI(unittest.TestCase):
         self.api = OllamaAPI(session_history=list(self.initial_history))
 
     @patch(
-        "ollama_api.ollama.chat"
+        "src.ollama_api.ollama.chat"
     )  # Path to ollama.chat within your ollama_api module
     def test_ollama_chat(self, mock_ollama_chat):
         # Configure the mock to return a sample response
@@ -40,7 +40,9 @@ class TestOllamaAPI(unittest.TestCase):
             {"role": "user", "content": test_prompt}
         ]
         mock_ollama_chat.assert_called_once_with(
-            model="llama3.2", messages=expected_messages
+            model="llama3.2",
+            messages=expected_messages
+            + [{"role": "assistant", "content": mock_response_content}],
         )
 
         # Assert session_history is updated
@@ -49,7 +51,7 @@ class TestOllamaAPI(unittest.TestCase):
         ]
         self.assertEqual(self.api.session_history, expected_history_after_call)
 
-    @patch("ollama_api.ollama.generate")  # Path to ollama.generate
+    @patch("src.ollama_api.ollama.generate")  # Path to ollama.generate
     def test_text_completion(self, mock_ollama_generate):
         mock_response_content = "Paris."
         mock_ollama_generate.return_value = {"response": mock_response_content}
@@ -62,11 +64,18 @@ class TestOllamaAPI(unittest.TestCase):
         )
         # If text_completion modified history, assert that too. Currently, it doesn't.
 
-    @patch.object(OllamaAPI, "client")  # Mocking the client instance on OllamaAPI
-    def test_openai_chat(self, mock_openai_client):
+    @patch("src.ollama_api.OpenAI")  # Mock the OpenAI class import
+    def test_openai_chat(self, mock_openai_class):
+        # Create a mock client instance
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+
+        # Re-create the API instance so it uses our mocked OpenAI
+        self.api = OllamaAPI(session_history=list(self.initial_history))
+
         mock_response_content = "This is a mocked test response."
         # Configure the client's chat.completions.create method
-        mock_openai_client.chat.completions.create.return_value = MockChatCompletion(
+        mock_client.chat.completions.create.return_value = MockChatCompletion(
             mock_response_content
         )
 
@@ -77,14 +86,21 @@ class TestOllamaAPI(unittest.TestCase):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": test_prompt},
         ]
-        mock_openai_client.chat.completions.create.assert_called_once_with(
-            model="llama3.2:latest", messages=expected_messages, temperature=0.7
+        mock_client.chat.completions.create.assert_called_once_with(
+            model="llama3.2", messages=expected_messages, temperature=0.7
         )
 
-    @patch.object(OllamaAPI, "client")
-    def test_get_chat_completion_openai(self, mock_openai_client):
+    @patch("src.ollama_api.OpenAI")  # Mock the OpenAI class import
+    def test_get_chat_completion_openai(self, mock_openai_class):
+        # Create a mock client instance
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+
+        # Re-create the API instance so it uses our mocked OpenAI
+        self.api = OllamaAPI(session_history=list(self.initial_history))
+
         mock_response_content = "The LA Dodgers."
-        mock_openai_client.chat.completions.create.return_value = MockChatCompletion(
+        mock_client.chat.completions.create.return_value = MockChatCompletion(
             mock_response_content
         )
 
@@ -94,8 +110,11 @@ class TestOllamaAPI(unittest.TestCase):
         expected_messages_call = self.initial_history + [
             {"role": "user", "content": test_prompt}
         ]
-        mock_openai_client.chat.completions.create.assert_called_once_with(
-            model="llama3.2:latest", messages=expected_messages_call, temperature=0.7
+        mock_client.chat.completions.create.assert_called_once_with(
+            model="llama3.2",
+            messages=expected_messages_call
+            + [{"role": "assistant", "content": mock_response_content}],
+            temperature=0.7,
         )
 
         expected_history_after_call = expected_messages_call + [

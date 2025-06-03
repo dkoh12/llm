@@ -48,7 +48,7 @@ class TestLMStudioAPI(unittest.TestCase):
         # self.api_openai_compatible.session_history = list(self.initial_history) # Already handled by constructor
 
     @patch(
-        "lmstudio_api.requests.get"
+        "src.lmstudio_api.requests.get"
     )  # Path to requests.get used in your lmstudio_api module
     def test_get_lm_studio_models_native(self, mock_get):
         mock_json_response = {"data": [{"id": "model1"}, {"id": "model2"}]}
@@ -56,9 +56,12 @@ class TestLMStudioAPI(unittest.TestCase):
 
         self.api_native.get_lm_studio_models()  # This method prints, so we mainly check the call
 
-        mock_get.assert_called_once_with(self.api_native.server + "/api/v0/models")
+        mock_get.assert_called_once_with(
+            self.api_native.server + "/api/v0/models",
+            timeout=10,
+        )
 
-    @patch("lmstudio_api.requests.get")
+    @patch("src.lmstudio_api.requests.get")
     def test_get_single_model_native(self, mock_get):
         model_id = "llama-3.2-3b-instruct"
         mock_json_response = {"id": model_id, "details": "some details"}
@@ -66,10 +69,11 @@ class TestLMStudioAPI(unittest.TestCase):
 
         self.api_native.get_single_model(model_id)
         mock_get.assert_called_once_with(
-            self.api_native.server + f"/api/v0/models/{model_id}"
+            self.api_native.server + f"/api/v0/models/{model_id}",
+            timeout=10,
         )
 
-    @patch("lmstudio_api.requests.post")
+    @patch("src.lmstudio_api.requests.post")
     def test_call_chat_completions_native(self, mock_post):
         mock_response_content = "Life is 42, mocked."
         mock_json_response = {
@@ -87,7 +91,8 @@ class TestLMStudioAPI(unittest.TestCase):
         ]
         expected_payload = {
             "model": "test-model",
-            "messages": expected_history_before_api_call,
+            "messages": expected_history_before_api_call
+            + [{"role": "assistant", "content": mock_response_content}],
             "temperature": 0.7,
             "max_tokens": -1,
             "stream": False,
@@ -96,6 +101,7 @@ class TestLMStudioAPI(unittest.TestCase):
             self.api_native.server + "/api/v0/chat/completions",
             headers={"Content-Type": "application/json"},
             json=expected_payload,
+            timeout=60,
         )
 
         expected_history_after_call = expected_history_before_api_call + [
@@ -103,7 +109,7 @@ class TestLMStudioAPI(unittest.TestCase):
         ]
         self.assertEqual(self.api_native.session_history, expected_history_after_call)
 
-    @patch("lmstudio_api.requests.post")
+    @patch("src.lmstudio_api.requests.post")
     def test_completions_native(self, mock_post):
         test_prompt = "The capital of France is"
         mock_response_text = " Paris, mocked."
@@ -126,6 +132,7 @@ class TestLMStudioAPI(unittest.TestCase):
             self.api_native.server + "/api/v0/completions",
             headers={"Content-Type": "application/json"},
             json=expected_payload,
+            timeout=60,
         )
         # Assert history if completions is supposed to update it.
         expected_history_after_call = self.initial_history + [
@@ -134,25 +141,20 @@ class TestLMStudioAPI(unittest.TestCase):
         ]
         self.assertEqual(self.api_native.session_history, expected_history_after_call)
 
-    @patch.object(
-        LMStudioAPI, "client", new_callable=MagicMock
-    )  # Mocking the client instance
-    def test_get_chat_completion_openai_compatible(
-        self, mock_openai_client_on_instance
-    ):
-        # Re-initialize api_openai_compatible to use the MagicMock client for this test
-        # And ensure it gets a fresh copy of initial_history
+    @patch("src.lmstudio_api.OpenAI")  # Mock the OpenAI class import
+    def test_get_chat_completion_openai_compatible(self, mock_openai_class):
+        # Create a mock client instance
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+
+        # Now when LMStudioAPI.__init__ calls OpenAI(...), it gets our mock
         self.api_openai_compatible = LMStudioAPI(
             openai_api=True, session_history=list(self.initial_history)
         )
-        self.api_openai_compatible.client = (
-            mock_openai_client_on_instance  # Assign the mock
-        )
-        # self.api_openai_compatible.session_history = list(self.initial_history) # Handled by constructor
 
         mock_response_content = "The mocked World Series winner is Team Mock."
-        mock_openai_client_on_instance.chat.completions.create.return_value = (
-            MockChatCompletion(mock_response_content)
+        mock_client.chat.completions.create.return_value = MockChatCompletion(
+            mock_response_content
         )
 
         test_prompt = "Who won the world series in 2020?"
@@ -163,8 +165,11 @@ class TestLMStudioAPI(unittest.TestCase):
         expected_history_call = self.initial_history + [
             {"role": "user", "content": test_prompt}
         ]
-        mock_openai_client_on_instance.chat.completions.create.assert_called_once_with(
-            model="test-openai-model", messages=expected_history_call, temperature=0.7
+        mock_client.chat.completions.create.assert_called_once_with(
+            model="test-openai-model",
+            messages=expected_history_call
+            + [{"role": "assistant", "content": mock_response_content}],
+            temperature=0.7,
         )
 
         expected_history_after_call = expected_history_call + [
