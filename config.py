@@ -19,6 +19,6 @@ DEFAULT_LMSTUDIO_SERVER = "http://localhost:1234"
 DEFAULT_LMSTUDIO_API_KEY = "lm-studio" 
 
 # Default Model Names for LM Studio (these are examples, adjust to your loaded models)
-DEFAULT_LMSTUDIO_CHAT_MODEL = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" # Example
-DEFAULT_LMSTUDIO_COMPLETION_MODEL = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" # Example
-DEFAULT_LMSTUDIO_EMBEDDING_MODEL = "nomic-ai/nomic-embed-text-v1.5-GGUF" # Example
+DEFAULT_LMSTUDIO_CHAT_MODEL = "llama-3.2-3b-instruct"
+DEFAULT_LMSTUDIO_COMPLETION_MODEL = "llava-v1.5-7b" 
+DEFAULT_LMSTUDIO_EMBEDDING_MODEL = "text-embedding-nomic-embed-text-v1.5"

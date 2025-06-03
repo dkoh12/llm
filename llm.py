@@ -116,6 +116,26 @@ class LLMUnifiedAgent:
             stop_event.set()
             progress_thread.join()
 
+    def switch_provider(self, new_provider: str, **kwargs):
+        """
+        Switch to a different provider.
+        
+        Args:
+            new_provider (str): "ollama" or "lmstudio"
+            **kwargs: Arguments to pass to the underlying API class.
+        """
+        if new_provider == "ollama":
+            self.api = OllamaAPI(**kwargs)
+            self.provider = "ollama"
+            print_system(f"Switched to {new_provider}")
+        elif new_provider == "lmstudio":
+            self.api = LMStudioAPI(**kwargs)
+            self.provider = "lmstudio"
+            print_system(f"Switched to {new_provider}")
+        else:
+            print_system("Invalid provider. Must be 'ollama' or 'lmstudio'.")
+            raise ValueError("Provider must be 'ollama' or 'lmstudio'.")
+
 if __name__ == "__main__":
     print_system("Choose provider: [ollama/lmstudio]")
     provider_choice = input().strip().lower()
@@ -132,10 +152,11 @@ if __name__ == "__main__":
         print_system(str(e))
         sys.exit(1)
 
-
     while True:
-        print_system("Type 'chat' for chat, 'completion' for text completion, 'models' to view existing models, or 'exit' to quit.")
+        print_system(f"\nCurrent provider: {agent.provider}")
+        print_system("Commands: 'chat', 'completion', 'models', 'switch', or 'exit'")
         cmd = input("Command: ").strip().lower()
+        
         if cmd == "exit":
             break
         elif cmd == "chat":
@@ -145,6 +166,24 @@ if __name__ == "__main__":
             user_prompt = input("Your prompt: ")
             agent.text_completion(prompt=user_prompt)
         elif cmd == "models":
-            agent.get_models()
+            models = agent.get_models()
+            # If get_models doesn't print them, you might want to print here
+            if models and not any(isinstance(m, dict) for m in models):
+                # Simple list of model names/IDs
+                print_system(f"Found {len(models)} models")
+        elif cmd == "switch":
+            print_system("Switch to which provider? [ollama/lmstudio]")
+            new_provider = input().strip().lower()
+            
+            switch_kwargs = {}
+            if new_provider == "lmstudio":
+                print_system("Use OpenAI-compatible API for LM Studio? [yes/no] (default: no)")
+                openai_choice = input().strip().lower()
+                switch_kwargs['openai_api'] = True if openai_choice == 'yes' else False
+            
+            try:
+                agent.switch_provider(new_provider, **switch_kwargs)
+            except ValueError:
+                print_system("Failed to switch provider.")
         else:
             print_system("Unknown command.")

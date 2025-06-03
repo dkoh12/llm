@@ -278,6 +278,7 @@ class LMStudioAPI:
         if prompt: # Only add to history if a new prompt is given
             self.session_history.append({"role": "user", "content": prompt})
 
+        print_system(f"Requesting OpenAI chat completion with model: {model}")
         logger.debug(f"Calling OpenAI chat completion with model: {model} using current session history.")
         try:
             chat_completion = self.client.chat.completions.create(
