@@ -1,6 +1,7 @@
 import unittest
 from lmstudio_api import LMStudioAPI
 
+
 class TestLMStudioAPI(unittest.TestCase):
     def setUp(self):
         self.api = LMStudioAPI(openai_api=False)
@@ -24,6 +25,7 @@ class TestLMStudioAPI(unittest.TestCase):
     def test_get_chat_completion_openai(self):
         self.api.get_chat_completion_openai(prompt="Who won the world series in 2020?")
         self.assertTrue(any("assistant" == msg["role"] for msg in self.api.history))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -17,23 +17,39 @@ Vibecoded with Github Copilot - GPT-4.1, Gemini 2.5 Pro, Claude Opus 4
 
 1. clone this repo
 
-2. set up vitrual env (recommended)
+2. Install `uv` - fast python package manager. This is optional as pip is fine too.
+`pip install uv`
+
+3. set up virtual env (recommended)
 
 ```
 python -m venv venv
 source venv/bin/activate    # on windows, venv\Scripts\activate
 ```
 
-3. install dependencies
+or you can use `uv`
+```
+uv venv
+source venv/bin/activate    # on windows, venv\Scripts\activate
+```
+
+4. install dependencies
 
 ```
 pip install -r requirements.txt
+```
+
+or
+```
+uv pip install -r requirements.txt
 ```
 
 ## Playing with LM Studio
 
 1. download LM studio (https://lmstudio.ai/)
 
+2. download local LLM models from LM Studio
+   
 run
 ```
 python lmstudio_api.py
@@ -43,7 +59,9 @@ python lmstudio_api.py
 
 1. download Ollama (https://ollama.com/)
 
-2. run ollama server
+2. download local LLM models from Ollama
+
+3. run ollama server
 
 ```
 ollama run codellama:latest
@@ -53,6 +71,9 @@ run
 ```
 python ollama_api.py
 ```
+
+Note Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink out there.
+This repo does not come with that. 
 
 ## Playing with LLM
 
@@ -74,6 +95,8 @@ Available Commands
 - Switch
   - To switch between Ollama and LMStudio
 
+Note - inference is kind of slow despite running the model on localhost
+
 ## Running Tests
 
 To run the unit tests for the API wrappers and agent, use the following commands from the root of the project:
@@ -89,6 +112,19 @@ python -m unittest tests/test_lmstudio_api.py
 ```
 
 Make sure your LM Studio and/or Ollama servers are running before running the tests, as the tests will attempt to connect to them.
+
+
+## Linting
+
+Linting is done with ruff. It's not yet hooked up to git hook.
+
+```
+ruff check . --fix
+```
+
+```
+ruff format .
+```
 
 ---
 
