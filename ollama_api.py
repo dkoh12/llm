@@ -1,9 +1,10 @@
-import pprint
+from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
+import config
+from library import print_system
+from logger import get_logger
 from openai import OpenAI
 import ollama
-from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
-from logger import get_logger
-import config
+from pprint import pprint
 
 logger = get_logger(__name__)
 
@@ -26,6 +27,28 @@ class OllamaAPI:
         )
         self.session_history = session_history if session_history is not None else [{"role": "system", "content": "You are a helpful assistant."}]
         logger.info(f"OllamaAPI initialized. OpenAI compatible endpoint: {openai_base_url}")
+
+    def get_ollama_models(self) -> list | None:
+        """
+        Fetches and logs the list of available models from Ollama.
+
+        Returns:
+            list | None: A list of model details dicts, or None if an error occurs.
+        """
+        try:
+            models_data = ollama.list()
+            if models_data and 'models' in models_data:
+                print_system("Available Ollama Models:")
+                # pprint(models_data['models'])
+                for model_info in models_data['models']:
+                    print_system(f"  - Name: {model_info.get('model')}, Size: {model_info.get('size')/(1024**3):.2f} GB, Parameter_Size: {model_info.get('details').get('parameter_size')}, Modified At: {model_info.get('modified_at')}")
+                return models_data['models']
+            else:
+                logger.warning("No models found or unexpected response format from ollama.list().")
+                return []
+        except Exception as e:
+            logger.exception("Failed to get models from Ollama")
+            return None
 
     def ollama_chat(self, prompt: str, model: str = config.DEFAULT_CHAT_MODEL) -> str | None:
         """
@@ -326,6 +349,8 @@ def run_conversable_agent(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
 if __name__=="__main__":
     api = OllamaAPI()
     
+    api.get_ollama_models()
+
     # api.ollama_chat(prompt="Hello, who won the world series in 2020?")
     # print(f"Ollama Session History: {api.session_history}")
     # api.multimodal_1()

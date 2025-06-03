@@ -1,14 +1,9 @@
 from ollama_api import OllamaAPI
+from library import print_system
 from lmstudio_api import LMStudioAPI
 import threading
 import time
 import sys
-
-def print_system(msg: str):
-    """
-    Print system messages in cyan color for better visibility.
-    """
-    print(f"\033[96m{msg}\033[0m")
 
 class LLMUnifiedAgent:
     """
@@ -37,13 +32,29 @@ class LLMUnifiedAgent:
     def _progress_bar(self, stop_event: threading.Event):
         spinner = ['|', '/', '-', '\\']
         idx = 0
-        # Using print directly here as print_system might interfere with \b
         print("Waiting for response ", end='', flush=True)
         while not stop_event.is_set():
             print(spinner[idx % len(spinner)], end='\b', flush=True)
             idx += 1
             time.sleep(0.1)
         print(" ", end='\r', flush=True) # Clear the spinner
+
+    def get_models(self) -> list | None:
+            """
+            Get available models from the current provider.
+            
+            Returns:
+                list | None: A list of models or None if error occurred.
+            """
+            try:
+                if self.provider == "ollama":
+                    return self.api.get_ollama_models()
+                elif self.provider == "lmstudio":
+                    return self.api.get_lm_studio_models()
+                else:
+                    return None
+            except Exception as e:
+                print_system(f"Error during getting models: {e}")
 
     def chat(self, prompt: str, model: str = None):
         """
@@ -122,8 +133,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
 
-    while True:    
-        print_system("Type 'chat' for chat, 'completion' for text completion, or 'exit' to quit.")
+    while True:
+        print_system("Type 'chat' for chat, 'completion' for text completion, 'models' to view existing models, or 'exit' to quit.")
         cmd = input("Command: ").strip().lower()
         if cmd == "exit":
             break
@@ -133,5 +144,7 @@ if __name__ == "__main__":
         elif cmd == "completion":
             user_prompt = input("Your prompt: ")
             agent.text_completion(prompt=user_prompt)
+        elif cmd == "models":
+            agent.get_models()
         else:
             print_system("Unknown command.")

@@ -1,8 +1,9 @@
+import config
+from library import print_system
+from logger import get_logger
 import requests
 from pprint import pprint 
 from openai import OpenAI
-from logger import get_logger
-import config
 
 # Get a logger for this module
 logger = get_logger(__name__)
@@ -48,11 +49,13 @@ class LMStudioAPI:
             response = requests.get(api_endpoint, timeout=10)
             response.raise_for_status() 
             data = response.json()
-            model_ids = [model.get("id") for model in data.get("data", []) if model.get("id")]
-            logger.info("Available native models:")
-            for model_id in model_ids:
-                logger.info(f"  - {model_id}")
-            return model_ids
+            models = data.get("data", [])
+            print_system("Available native models:")
+            for model in models:
+                model_id = model.get("id")
+                model_type = model.get("type")
+                print_system(f"  - Name: {model_id} Type: {model_type}")
+            return models
         except Exception as e:
             logger.exception(f"An error occurred in get_lm_studio_models (native)")
             return None
@@ -73,7 +76,7 @@ class LMStudioAPI:
             # Attempt to use the OpenAI client's retrieve model, though it's for OpenAI models
             try:
                 model_data = self.client.models.retrieve(model_id)
-                logger.info(f"Model details for '{model_id}' (OpenAI API):\n{pprint.pformat(model_data.to_dict())}")
+                print_system(f"Model details for '{model_id}' (OpenAI API):\n{pprint.pformat(model_data.to_dict())}")
                 return model_data.to_dict()
             except Exception as e:
                 logger.exception(f"Error fetching model '{model_id}' via OpenAI API")
@@ -85,7 +88,7 @@ class LMStudioAPI:
             response = requests.get(api_endpoint, timeout=10)
             response.raise_for_status()
             model_details = response.json()
-            logger.info(f"Details for model '{model_id}':\n{pprint.pformat(model_details)}")
+            print_system(f"Details for model '{model_id}':\n{pprint.pformat(model_details)}")
             return model_details
         except Exception as e:
             logger.exception(f"An error occurred in get_single_model (native)")
@@ -253,9 +256,9 @@ class LMStudioAPI:
         try:
             models_response = self.client.models.list()
             model_ids = [model_data.id for model_data in models_response.data]
-            logger.info("Available OpenAI-compatible models (via client):")
+            print_system("Available OpenAI-compatible models (via client):")
             for model_id in model_ids:
-                logger.info(f"  - {model_id}")
+                print_system(f"  - {model_id}")
             return model_ids
         except Exception as e:
             logger.exception(f"An error occurred in get_lm_studio_models_openai")
@@ -301,12 +304,15 @@ if __name__=="__main__":
     #    logger.handlers[0].setLevel(logging.DEBUG)
 
     lm_studio_api_native = LMStudioAPI(openai_api=False)
-    # lm_studio_api_native.get_lm_studio_models()
+    lm_studio_api_native.get_lm_studio_models()
+    
+    
     # lm_studio_api_native.call_chat_completions("Tell me a joke about a computer.")
     # logger.debug(f"LM Studio Native History: {lm_studio_api_native.session_history}")
 
-    # lm_studio_api_openai = LMStudioAPI(openai_api=True)
-    # lm_studio_api_openai.get_lm_studio_models_openai()
+    lm_studio_api_openai = LMStudioAPI(openai_api=True)
+    lm_studio_api_openai.get_lm_studio_models_openai()
+    
     # lm_studio_api_openai.get_chat_completion_openai("What's the weather like in space?")
     # logger.debug(f"LM Studio OpenAI History: {lm_studio_api_openai.session_history}")
 

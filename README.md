@@ -1,5 +1,3 @@
-# Local LLM
-
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/Ollama-0.1.34%2B-green?logo=data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDAwMDAwIiBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxNiIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iIzAwZDY2ZiIvPjwvc3ZnPg==" alt="Ollama 0.1.34+">
@@ -7,6 +5,7 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
 </p>
 
+# Local LLM
 
 Playing around with both LM Studio and Ollama.
 For sake of simplicity, not touching llama.cpp
