@@ -28,6 +28,8 @@ class LLMUnifiedAgent:
             self.provider = "lmstudio"
         else:
             raise ValueError("Provider must be 'ollama' or 'lmstudio'.")
+        
+        self.current_model = None  # Track the currently selected model
 
     def _progress_bar(self, stop_event: threading.Event):
         spinner = ['|', '/', '-', '\\']
@@ -40,21 +42,76 @@ class LLMUnifiedAgent:
         print(" ", end='\r', flush=True) # Clear the spinner
 
     def get_models(self) -> list | None:
-            """
-            Get available models from the current provider.
+        """
+        Get available models from the current provider.
+        
+        Returns:
+            list | None: A list of models or None if error occurred.
+        """
+        try:
+            if self.provider == "ollama":
+                return self.api.get_ollama_models()
+            elif self.provider == "lmstudio":
+                return self.api.get_lm_studio_models()
+            else:
+                return None
+        except Exception as e:
+            print_system(f"Error during getting models: {e}")
+            return None
+
+    def select_model(self) -> str | None:
+        """
+        Display available models and let user select one.
+        
+        Returns:
+            str | None: Selected model name/ID or None if cancelled.
+        """
+        models = self.get_models()
+        if not models:
+            print_system("No models available or error occurred.")
+            return None
+        
+        print_system("\nAvailable models:")
+        for i, model in enumerate(models):
             
-            Returns:
-                list | None: A list of models or None if error occurred.
-            """
-            try:
-                if self.provider == "ollama":
-                    return self.api.get_ollama_models()
-                elif self.provider == "lmstudio":
-                    return self.api.get_lm_studio_models()
+            print(i)
+            print(model)
+
+            if self.provider == "ollama":
+                model_name = model.get('model')
+                size_gb = model.get('size', 0) / (1024**3) if 'size' in model else 0
+                parameter_size = model.get('details').get('parameter_size')
+                print_system(f"{i + 1}. {model_name} ({size_gb:.2f} GB) - {parameter_size} parameters")
+            elif self.provider == "lmstudio":
+                if 'id' in model:
+                    # LM Studio api
+                    print_system(f"{i + 1}. {model.get('id')}")
                 else:
-                    return None
-            except Exception as e:
-                print_system(f"Error during getting models: {e}")
+                    # LM Studio OpenAI api
+                    print_system(f"{i + 1}. {model}")
+        
+        print_system("0. Cancel")
+        
+        try:
+            choice = int(input("Select model number: "))
+            if choice == 0:
+                return None
+            elif 1 <= choice <= len(models):
+                model = models[choice - 1]
+                if self.provider == "ollama":
+                    return model.get('model')
+                elif self.provider == "lmstudio":
+                    if 'id' in model:
+                        return model.get('id')
+                    else:
+                        # For OpenAI-compatible API, return the model name
+                        return model
+            else:
+                print_system("Invalid selection.")
+                return None
+        except ValueError:
+            print_system("Invalid input.")
+            return None
 
     def chat(self, prompt: str, model: str = None):
         """
@@ -64,6 +121,8 @@ class LLMUnifiedAgent:
             prompt (str): The user message.
             model (str): The model to use (optional).
         """
+        model = model or self.current_model
+        
         stop_event = threading.Event()
         progress_thread = threading.Thread(target=self._progress_bar, args=(stop_event,))
         progress_thread.start()
@@ -94,6 +153,8 @@ class LLMUnifiedAgent:
             prompt (str): The prompt string.
             model (str): The model to use (optional).
         """
+        model = model or self.current_model
+        
         stop_event = threading.Event()
         progress_thread = threading.Thread(target=self._progress_bar, args=(stop_event,))
         progress_thread.start()
@@ -135,6 +196,8 @@ class LLMUnifiedAgent:
         else:
             print_system("Invalid provider. Must be 'ollama' or 'lmstudio'.")
             raise ValueError("Provider must be 'ollama' or 'lmstudio'.")
+        
+        self.current_model = None  # Reset model selection
 
 if __name__ == "__main__":
     print_system("Choose provider: [ollama/lmstudio]")
@@ -154,7 +217,8 @@ if __name__ == "__main__":
 
     while True:
         print_system(f"\nCurrent provider: {agent.provider}")
-        print_system("Commands: 'chat', 'completion', 'models', 'switch', or 'exit'")
+        print_system(f"Current Model: {agent.current_model}" if agent.current_model else "Current Model: None")
+        print_system("Commands: 'chat', 'completion', 'models', 'select', 'switch', or 'exit'")
         cmd = input("Command: ").strip().lower()
         
         if cmd == "exit":
@@ -167,10 +231,14 @@ if __name__ == "__main__":
             agent.text_completion(prompt=user_prompt)
         elif cmd == "models":
             models = agent.get_models()
-            # If get_models doesn't print them, you might want to print here
-            if models and not any(isinstance(m, dict) for m in models):
-                # Simple list of model names/IDs
-                print_system(f"Found {len(models)} models")
+        elif cmd == "select":
+            # Select a model to use as default for subsequent commands
+            selected = agent.select_model()
+            if selected:
+                agent.current_model = selected
+                print_system(f"Selected model: {selected}")
+            else:
+                print_system("Model selection cancelled.")
         elif cmd == "switch":
             print_system("Switch to which provider? [ollama/lmstudio]")
             new_provider = input().strip().lower()

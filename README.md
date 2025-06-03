@@ -62,6 +62,18 @@ To play with the overall LLM Agent / chatbot, run
 python llm.py
 ```
 
+Available Commands
+- Chat
+  - chat
+- Completion
+  - auto complete
+- Models
+  - To list all models from the selected provider (Ollama / LMStudio)
+- Select
+  - To select a model
+- Switch
+  - To switch between Ollama and LMStudio
+
 ## Running Tests
 
 To run the unit tests for the API wrappers and agent, use the following commands from the root of the project:
