@@ -126,6 +126,26 @@ ruff check . --fix
 ruff format .
 ```
 
+## Project Management
+
+Project Management is done through `pyproject.toml`
+
+```
+# For main dependencies
+uv pip compile pyproject.toml -o requirements.txt
+
+# For development dependencies
+uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
+```
+
+```
+# For development
+uv pip sync requirements-dev.txt
+
+# For production/CI (if you don't have dev tools there)
+uv pip sync requirements.txt
+```
+
 ---
 
 ## License
