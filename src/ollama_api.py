@@ -45,7 +45,6 @@ class OllamaAPI:
             models_data = ollama.list()
             if models_data and "models" in models_data:
                 print_system("Available Ollama Models:")
-                # pprint(models_data['models'])
                 for model_info in models_data["models"]:
                     print_system(
                         f"  - Name: {model_info.get('model')}, Size: {model_info.get('size') / (1024**3):.2f} GB, Parameter_Size: {model_info.get('details').get('parameter_size')}, Modified At: {model_info.get('modified_at')}"
@@ -165,6 +164,7 @@ class OllamaAPI:
             )
             ai_message = res["message"]["content"]
             logger.info(f"Multimodal_2 Response: {ai_message}")
+            self.session_history.append({"role": "assistant", "content": ai_message})
             return ai_message
         except FileNotFoundError:
             logger.error(f"Image file not found for multimodal_2: {image_file_path}")
@@ -194,6 +194,7 @@ class OllamaAPI:
             )
             response_text = result["response"]
             logger.info(f"Text Completion Response: {response_text}")
+            self.session_history.append({"role": "assistant", "content": response_text})
             return response_text
         except Exception:
             logger.exception("Error in text_completion")
@@ -226,6 +227,7 @@ class OllamaAPI:
             )
             ai_message = chat_completion.choices[0].message.content
             logger.info(f"OpenAI Chat Response: {ai_message}")
+            self.session_history.append({"role": "assistant", "content": ai_message})
             return ai_message
         except Exception:
             logger.exception("Error in openai_chat")

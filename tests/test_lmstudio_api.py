@@ -1,6 +1,6 @@
 import unittest
 
-from lmstudio_api import LMStudioAPI
+from src.lmstudio_api import LMStudioAPI
 
 
 class TestLMStudioAPI(unittest.TestCase):
@@ -17,15 +17,21 @@ class TestLMStudioAPI(unittest.TestCase):
 
     def test_call_chat_completions(self):
         self.api.call_chat_completions(prompt="Hello, what is the meaning of life?")
-        self.assertTrue(any("assistant" == msg["role"] for msg in self.api.history))
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
     def test_completions(self):
         self.api.completions(prompt="The capital of France is")
-        self.assertTrue(any("assistant" == msg["role"] for msg in self.api.history))
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
     def test_get_chat_completion_openai(self):
         self.api.get_chat_completion_openai(prompt="Who won the world series in 2020?")
-        self.assertTrue(any("assistant" == msg["role"] for msg in self.api.history))
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
 
 if __name__ == "__main__":

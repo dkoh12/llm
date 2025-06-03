@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lmstudio_api import (
+from src.lmstudio_api import (
     LMStudioAPI,
 )
 

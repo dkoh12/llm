@@ -1,6 +1,6 @@
 import unittest
 
-from ollama_api import OllamaAPI
+from src.ollama_api import OllamaAPI
 
 
 class TestOllamaAPI(unittest.TestCase):
@@ -18,15 +18,21 @@ class TestOllamaAPI(unittest.TestCase):
 
     def test_text_completion(self):
         self.api.text_completion(prompt="What is the capital of France?")
-        # No assertion, just checks that it runs without error
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
     def test_openai_chat(self):
         self.api.openai_chat(prompt="Say this is a test")
-        # No assertion, just checks that it runs without error
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
     def test_get_chat_completion_openai(self):
         self.api.get_chat_completion_openai(prompt="Who won the world series in 2020?")
-        # No assertion, just checks that it runs without error
+        self.assertTrue(
+            any("assistant" == msg["role"] for msg in self.api.session_history)
+        )
 
 
 if __name__ == "__main__":

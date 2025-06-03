@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from ollama_api import OllamaAPI  # Assuming your OllamaAPI class is in ollama_api.py
+from src.ollama_api import OllamaAPI
 
 
 # A mock response object for openai.ChatCompletion

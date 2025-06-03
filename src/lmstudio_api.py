@@ -1,4 +1,4 @@
-from pprint import pprint
+from pprint import pformat
 
 import requests
 from openai import OpenAI
@@ -89,7 +89,7 @@ class LMStudioAPI:
             try:
                 model_data = self.client.models.retrieve(model_id)
                 print_system(
-                    f"Model details for '{model_id}' (OpenAI API):\n{pprint.pformat(model_data.to_dict())}"
+                    f"Model details for '{model_id}' (OpenAI API):\n{pformat(model_data.to_dict())}"
                 )
                 return model_data.to_dict()
             except Exception:
@@ -104,9 +104,7 @@ class LMStudioAPI:
             response = requests.get(api_endpoint, timeout=10)
             response.raise_for_status()
             model_details = response.json()
-            print_system(
-                f"Details for model '{model_id}':\n{pprint.pformat(model_details)}"
-            )
+            print_system(f"Details for model '{model_id}':\n{pformat(model_details)}")
             return model_details
         except Exception:
             logger.exception("An error occurred in get_single_model (native)")
