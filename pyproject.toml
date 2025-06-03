@@ -52,7 +52,7 @@ Repository = "https://github.com/yourusername/local-llm.git"
 Documentation = "https://github.com/yourusername/local-llm#readme"
 
 [project.scripts]
-local-llm = "llm:main"  # If you add a main() function to llm.py
+local-llm = "llm:main"  # This assumes llm.py has a main() function
 
 [tool.setuptools]
 packages = ["llm", "ollama_api", "lmstudio_api", "logger", "library", "config"]

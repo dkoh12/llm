@@ -3,9 +3,9 @@ from pprint import pformat
 import requests
 from openai import OpenAI
 
-import src.library.config as config
-from src.library.library import print_system
-from src.library.logger import get_logger
+import library.config as config
+from library.library import print_system
+from library.logger import get_logger
 
 # Get a logger for this module
 logger = get_logger(__name__)

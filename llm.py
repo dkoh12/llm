@@ -205,7 +205,8 @@ class LLMUnifiedAgent:
         self.current_model = None  # Reset model selection
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the CLI."""
     print_system("Choose provider: [ollama/lmstudio]")
     provider_choice = input().strip().lower()
 
@@ -242,7 +243,7 @@ if __name__ == "__main__":
             user_prompt = input("Your prompt: ")
             agent.text_completion(prompt=user_prompt)
         elif cmd == "models":
-            models = agent.get_models()
+            agent.get_models()
         elif cmd == "select":
             # Select a model to use as default for subsequent commands
             selected = agent.select_model()
@@ -269,3 +270,7 @@ if __name__ == "__main__":
                 print_system("Failed to switch provider.")
         else:
             print_system("Unknown command.")
+
+
+if __name__ == "__main__":
+    main()

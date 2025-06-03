@@ -43,7 +43,7 @@ uv pip sync requirements.txt # Or requirements-dev.txt for development
 
 run
 ```
-python lmstudio_api.py
+python src/lmstudio_api.py
 ```
 
 ## Playing with Ollama
@@ -60,7 +60,7 @@ ollama run codellama:latest
 
 run
 ```
-python ollama_api.py
+python src/ollama_api.py
 ```
 
 Note - Ollama and LM Studio downloads models in different locations. There are OSS tools out there to create a symlink out there.
