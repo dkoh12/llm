@@ -412,6 +412,29 @@ def run_conversable_agent(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
         logger.exception("Error in run_conversable_agent")
 
 
+def select_model(models: list) -> str | None:
+    """Helper function to select a model."""
+    print_system("\nAvailable models:")
+    for i, model in enumerate(models):
+        model_name = model.get("model", "Unknown")
+        size_gb = model.get("size", 0) / (1024**3)
+        print_system(f"{i + 1}. {model_name} ({size_gb:.2f} GB)")
+    print_system("0. Use default model")
+
+    try:
+        choice = int(input("Select model number: "))
+        if choice == 0:
+            return config.DEFAULT_CHAT_MODEL
+        elif 1 <= choice <= len(models):
+            return models[choice - 1].get("model")
+        else:
+            print_system("Invalid selection. Using current/default model.")
+            return None
+    except ValueError:
+        print_system("Invalid input. Using current/default model.")
+        return None
+
+
 def main():
     # Simple chat interface for testing OllamaAPI directly
     print_system("=== Ollama API Direct Chat ===")
@@ -426,33 +449,8 @@ def main():
         sys.exit(1)
 
     # Initial model selection
-    selected_model = None
-
-    def select_model():
-        """Helper function to select a model."""
-        print_system("\nAvailable models:")
-        for i, model in enumerate(models):
-            model_name = model.get("model", "Unknown")
-            size_gb = model.get("size", 0) / (1024**3)
-            print_system(f"{i + 1}. {model_name} ({size_gb:.2f} GB)")
-        print_system("0. Use default model")
-
-        try:
-            choice = int(input("Select model number: "))
-            if choice == 0:
-                return config.DEFAULT_CHAT_MODEL
-            elif 1 <= choice <= len(models):
-                return models[choice - 1].get("model")
-            else:
-                print_system("Invalid selection. Using current/default model.")
-                return None
-        except ValueError:
-            print_system("Invalid input. Using current/default model.")
-            return None
-
-    # Initial model selection
     print_system("\nSelect initial model:")
-    selected_model = select_model()
+    selected_model = select_model(models)
     if not selected_model:
         selected_model = config.DEFAULT_CHAT_MODEL
     print_system(f"Using model: {selected_model}")
@@ -491,7 +489,7 @@ def main():
 
         elif cmd == "select":
             # Allow user to change model during session
-            new_model = select_model()
+            new_model = select_model(models)
             if new_model:
                 selected_model = new_model
                 print_system(f"Switched to model: {selected_model}")

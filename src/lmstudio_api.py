@@ -359,6 +359,37 @@ class LMStudioAPI:
             return None
 
 
+def select_model(models: list) -> str | None:
+    """Helper function to select a model."""
+    print_system("\nAvailable models:")
+    for i, model in enumerate(models):
+        if isinstance(model, dict):
+            # Native API returns dict
+            model_name = model.get("id", "Unknown")
+            model_type = model.get("type", "")
+            print_system(f"{i + 1}. {model_name} (Type: {model_type})")
+        else:
+            # OpenAI API returns string
+            print_system(f"{i + 1}. {model}")
+    print_system("0. Use default model")
+
+    try:
+        choice = int(input("Select model number: "))
+        if choice == 0:
+            return config.DEFAULT_LMSTUDIO_CHAT_MODEL
+        elif 1 <= choice <= len(models):
+            if isinstance(models[choice - 1], dict):
+                return models[choice - 1].get("id")
+            else:
+                return models[choice - 1]
+        else:
+            print_system("Invalid selection. Using current/default model.")
+            return None
+    except ValueError:
+        print_system("Invalid input. Using current/default model.")
+        return None
+
+
 def main():
     # Simple chat interface for testing LMStudioAPI directly
     print_system("=== LM Studio API Direct Chat ===")
@@ -366,7 +397,7 @@ def main():
     # Ask about API mode
     print_system("Use OpenAI-compatible API? [yes/no] (default: no)")
     openai_choice = input().strip().lower()
-    use_openai_api = True if openai_choice == "yes" else False
+    use_openai_api = openai_choice == "yes"
 
     api = LMStudioAPI(openai_api=use_openai_api)
     print_system(
@@ -382,41 +413,8 @@ def main():
         sys.exit(1)
 
     # Initial model selection
-    selected_model = None
-
-    def select_model():
-        """Helper function to select a model."""
-        print_system("\nAvailable models:")
-        for i, model in enumerate(models):
-            if isinstance(model, dict):
-                # Native API returns dict
-                model_name = model.get("id", "Unknown")
-                model_type = model.get("type", "")
-                print_system(f"{i + 1}. {model_name} (Type: {model_type})")
-            else:
-                # OpenAI API returns string
-                print_system(f"{i + 1}. {model}")
-        print_system("0. Use default model")
-
-        try:
-            choice = int(input("Select model number: "))
-            if choice == 0:
-                return config.DEFAULT_LMSTUDIO_CHAT_MODEL
-            elif 1 <= choice <= len(models):
-                if isinstance(models[choice - 1], dict):
-                    return models[choice - 1].get("id")
-                else:
-                    return models[choice - 1]
-            else:
-                print_system("Invalid selection. Using current/default model.")
-                return None
-        except ValueError:
-            print_system("Invalid input. Using current/default model.")
-            return None
-
-    # Initial model selection
     print_system("\nSelect initial model:")
-    selected_model = select_model()
+    selected_model = select_model(models)
     if not selected_model:
         selected_model = config.DEFAULT_LMSTUDIO_CHAT_MODEL
     print_system(f"Using model: {selected_model}")
@@ -458,7 +456,7 @@ def main():
 
         elif cmd == "select":
             # Allow user to change model during session
-            new_model = select_model()
+            new_model = select_model(models)
             if new_model:
                 selected_model = new_model
                 print_system(f"Switched to model: {selected_model}")
