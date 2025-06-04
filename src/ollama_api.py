@@ -1,3 +1,5 @@
+import sys
+
 import ollama
 from autogen import AssistantAgent, ConversableAgent, UserProxyAgent
 from openai import OpenAI
@@ -410,10 +412,125 @@ def run_conversable_agent(model: str = config.DEFAULT_TEXT_COMPLETION_MODEL):
         logger.exception("Error in run_conversable_agent")
 
 
-if __name__ == "__main__":
+def main():
+    # Simple chat interface for testing OllamaAPI directly
+    print_system("=== Ollama API Direct Chat ===")
     api = OllamaAPI()
 
-    api.get_ollama_models()
+    # Show available models
+    print_system("\nFetching available models...")
+    models = api.get_ollama_models()
+
+    if not models:
+        print_system("No models available. Make sure Ollama is running.")
+        sys.exit(1)
+
+    # Initial model selection
+    selected_model = None
+
+    def select_model():
+        """Helper function to select a model."""
+        print_system("\nAvailable models:")
+        for i, model in enumerate(models):
+            model_name = model.get("model", "Unknown")
+            size_gb = model.get("size", 0) / (1024**3)
+            print_system(f"{i + 1}. {model_name} ({size_gb:.2f} GB)")
+        print_system("0. Use default model")
+
+        try:
+            choice = int(input("Select model number: "))
+            if choice == 0:
+                return config.DEFAULT_CHAT_MODEL
+            elif 1 <= choice <= len(models):
+                return models[choice - 1].get("model")
+            else:
+                print_system("Invalid selection. Using current/default model.")
+                return None
+        except ValueError:
+            print_system("Invalid input. Using current/default model.")
+            return None
+
+    # Initial model selection
+    print_system("\nSelect initial model:")
+    selected_model = select_model()
+    if not selected_model:
+        selected_model = config.DEFAULT_CHAT_MODEL
+    print_system(f"Using model: {selected_model}")
+
+    # Main chat loop
+    print_system("\nStarting chat with Ollama. Type 'exit' to quit.")
+    print_system(
+        "Commands: 'chat', 'completion', 'select', 'models', 'history', 'clear', or 'exit'\n"
+    )
+
+    while True:
+        print_system(f"\nCurrent model: {selected_model}")
+        cmd = input("Command: ").strip().lower()
+
+        if cmd == "exit":
+            print_system("Goodbye!")
+            break
+
+        elif cmd == "chat":
+            user_prompt = input("Your message: ")
+            print_system("\nThinking...")
+            response = api.ollama_chat(prompt=user_prompt, model=selected_model)
+            if response:
+                print_system(f"\nAssistant: {response}")
+            else:
+                print_system("Error: Failed to get response")
+
+        elif cmd == "completion":
+            user_prompt = input("Your prompt: ")
+            print_system("\nGenerating...")
+            response = api.text_completion(prompt=user_prompt, model=selected_model)
+            if response:
+                print_system(f"\nCompletion: {response}")
+            else:
+                print_system("Error: Failed to get completion")
+
+        elif cmd == "select":
+            # Allow user to change model during session
+            new_model = select_model()
+            if new_model:
+                selected_model = new_model
+                print_system(f"Switched to model: {selected_model}")
+            else:
+                print_system("Model selection cancelled.")
+
+        elif cmd == "models":
+            # Re-fetch and display available models
+            print_system("\nRefreshing model list...")
+            models = api.get_ollama_models()
+            if not models:
+                print_system("Failed to refresh models.")
+
+        elif cmd == "history":
+            print_system("\n=== Conversation History ===")
+            for msg in api.session_history:
+                role = msg["role"].capitalize()
+                content = (
+                    msg["content"][:100] + "..."
+                    if len(msg["content"]) > 100
+                    else msg["content"]
+                )
+                print_system(f"{role}: {content}")
+            print_system("=========================\n")
+
+        elif cmd == "clear":
+            api.session_history = [
+                {"role": "system", "content": "You are a helpful assistant."}
+            ]
+            print_system("Conversation history cleared.")
+
+        else:
+            print_system(
+                "Unknown command. Use: 'chat', 'completion', 'select', 'models', 'history', 'clear', or 'exit'"
+            )
+
+
+if __name__ == "__main__":
+    main()
 
     # api.ollama_chat(prompt="Hello, who won the world series in 2020?")
     # print(f"Ollama Session History: {api.session_history}")

@@ -1,3 +1,4 @@
+import sys
 from pprint import pformat
 
 import requests
@@ -358,21 +359,162 @@ class LMStudioAPI:
             return None
 
 
+def main():
+    # Simple chat interface for testing LMStudioAPI directly
+    print_system("=== LM Studio API Direct Chat ===")
+
+    # Ask about API mode
+    print_system("Use OpenAI-compatible API? [yes/no] (default: no)")
+    openai_choice = input().strip().lower()
+    use_openai_api = True if openai_choice == "yes" else False
+
+    api = LMStudioAPI(openai_api=use_openai_api)
+    print_system(
+        f"Using {'OpenAI-compatible' if use_openai_api else 'native'} API mode"
+    )
+
+    # Show available models
+    print_system("\nFetching available models...")
+    models = api.get_lm_studio_models()
+
+    if not models:
+        print_system("No models available. Make sure LM Studio is running.")
+        sys.exit(1)
+
+    # Initial model selection
+    selected_model = None
+
+    def select_model():
+        """Helper function to select a model."""
+        print_system("\nAvailable models:")
+        for i, model in enumerate(models):
+            if isinstance(model, dict):
+                # Native API returns dict
+                model_name = model.get("id", "Unknown")
+                model_type = model.get("type", "")
+                print_system(f"{i + 1}. {model_name} (Type: {model_type})")
+            else:
+                # OpenAI API returns string
+                print_system(f"{i + 1}. {model}")
+        print_system("0. Use default model")
+
+        try:
+            choice = int(input("Select model number: "))
+            if choice == 0:
+                return config.DEFAULT_LMSTUDIO_CHAT_MODEL
+            elif 1 <= choice <= len(models):
+                if isinstance(models[choice - 1], dict):
+                    return models[choice - 1].get("id")
+                else:
+                    return models[choice - 1]
+            else:
+                print_system("Invalid selection. Using current/default model.")
+                return None
+        except ValueError:
+            print_system("Invalid input. Using current/default model.")
+            return None
+
+    # Initial model selection
+    print_system("\nSelect initial model:")
+    selected_model = select_model()
+    if not selected_model:
+        selected_model = config.DEFAULT_LMSTUDIO_CHAT_MODEL
+    print_system(f"Using model: {selected_model}")
+
+    # Main chat loop
+    print_system("\nStarting chat with LM Studio. Type 'exit' to quit.")
+    print_system(
+        "Commands: 'chat', 'completion', 'select', 'models', 'history', 'clear', 'mode', or 'exit'\n"
+    )
+
+    while True:
+        print_system(f"\nCurrent model: {selected_model}")
+        print_system(f"API mode: {'OpenAI-compatible' if api.openai_api else 'Native'}")
+        cmd = input("Command: ").strip().lower()
+
+        if cmd == "exit":
+            print_system("Goodbye!")
+            break
+
+        elif cmd == "chat":
+            user_prompt = input("Your message: ")
+            print_system("\nThinking...")
+            response = api.call_chat_completions(
+                prompt=user_prompt, model=selected_model
+            )
+            if response:
+                print_system(f"\nAssistant: {response}")
+            else:
+                print_system("Error: Failed to get response")
+
+        elif cmd == "completion":
+            user_prompt = input("Your prompt: ")
+            print_system("\nGenerating...")
+            response = api.completions(prompt=user_prompt, model=selected_model)
+            if response:
+                print_system(f"\nCompletion: {response}")
+            else:
+                print_system("Error: Failed to get completion")
+
+        elif cmd == "select":
+            # Allow user to change model during session
+            new_model = select_model()
+            if new_model:
+                selected_model = new_model
+                print_system(f"Switched to model: {selected_model}")
+            else:
+                print_system("Model selection cancelled.")
+
+        elif cmd == "models":
+            # Re-fetch and display available models
+            print_system("\nRefreshing model list...")
+            models = api.get_lm_studio_models()
+            if not models:
+                print_system("Failed to refresh models.")
+
+        elif cmd == "history":
+            print_system("\n=== Conversation History ===")
+            for msg in api.session_history:
+                role = msg["role"].capitalize()
+                content = (
+                    msg["content"][:100] + "..."
+                    if len(msg["content"]) > 100
+                    else msg["content"]
+                )
+                print_system(f"{role}: {content}")
+            print_system("=========================\n")
+
+        elif cmd == "clear":
+            api.session_history = [
+                {"role": "system", "content": "You are a helpful assistant."}
+            ]
+            print_system("Conversation history cleared.")
+
+        elif cmd == "mode":
+            # Switch between OpenAI and native API modes
+            print_system("Switch to which API mode? [openai/native]")
+            mode_choice = input().strip().lower()
+            if mode_choice == "openai":
+                api = LMStudioAPI(openai_api=True)
+                print_system("Switched to OpenAI-compatible API mode")
+            elif mode_choice == "native":
+                api = LMStudioAPI(openai_api=False)
+                print_system("Switched to native API mode")
+            else:
+                print_system("Invalid choice. Mode unchanged.")
+                continue
+
+            # Re-fetch models after switching mode
+            print_system("\nFetching models for new mode...")
+            models = api.get_lm_studio_models()
+            if not models:
+                print_system("No models available in this mode.")
+
+        else:
+            print_system(
+                "Unknown command. Use: 'chat', 'completion', 'select', 'models', 'history', 'clear', 'mode', or 'exit'"
+            )
+
+
 if __name__ == "__main__":
-    # To see debug logs from this module for testing:
-    # import logging
-    # logger.setLevel(logging.DEBUG) # Set level for this module's logger
-    # if logger.hasHandlers(): # Set level for its handler too
-    #    logger.handlers[0].setLevel(logging.DEBUG)
-
-    lm_studio_api_native = LMStudioAPI(openai_api=False)
-    lm_studio_api_native.get_lm_studio_models()
-
-    # lm_studio_api_native.call_chat_completions("Tell me a joke about a computer.")
-    # logger.debug(f"LM Studio Native History: {lm_studio_api_native.session_history}")
-
-    lm_studio_api_openai = LMStudioAPI(openai_api=True)
-    lm_studio_api_openai.get_lm_studio_models_openai()
-
-    # lm_studio_api_openai.get_chat_completion_openai("What's the weather like in space?")
-    # logger.debug(f"LM Studio OpenAI History: {lm_studio_api_openai.session_history}")
+    main()
